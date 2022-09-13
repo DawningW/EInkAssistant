@@ -1,4 +1,9 @@
-/* 此文件以 MIT 协议开源 */
+/**
+ * 将所有的 API 请求放到一个文件中方便在其他项目中复用, 此文件以 MIT 协议开源
+ * 
+ * @author QingChenW
+ * @copyright MIT license
+ */
 
 #ifndef __API_HPP__
 #define __API_HPP__
@@ -8,7 +13,7 @@
 #include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 
-// 以下内容请按照您的项目需求修改
+// 以下参数请按照您的项目需求修改
 #include "config.h"
 #ifndef QWEATHER_KEY
 #define QWEATHER_KEY ""

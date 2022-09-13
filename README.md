@@ -1,8 +1,6 @@
 # E-Ink Assistant
 # 墨水屏智能助理
 
-**正在开发中**
-
 基于 ESP8266/~~ESP32~~(未来支持) 使用 Arduino 开发的墨水屏应用, 具有时钟, 日历, 天气等功能
 
 可启用深度休眠模式, 休眠电流<1mA
@@ -46,6 +44,7 @@ ESP8266 支持深度休眠, 若启用深度休眠则需连接 GPIO16 和 RST 引
 ## 编译指南
 ### 安装 Arduino 和第三方库
 - [ESP8266-Arduino](https://github.com/esp8266/Arduino)
+- [ESP_EEPROM](https://github.com/jwrw/ESP_EEPROM)
 - [Adafruit GFX](https://github.com/adafruit/Adafruit-GFX-Library)
 - [U8g2_for_Adafruit_GFX](https://github.com/olikraus/U8g2_for_Adafruit_GFX)(**注意: 需要安装补丁, 请参照下方步骤**)
 - [GxEPD2](https://github.com/ZinggJM/GxEPD2)

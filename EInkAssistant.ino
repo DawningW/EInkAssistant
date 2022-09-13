@@ -1,15 +1,12 @@
 /**
  * E-Ink Assistant 墨水屏智能助理
  *
- * 基于ESP8266使用Arduino开发的墨水屏应用, 具有时钟, 日历, 天气等功能, 且提供接口可自行扩展
+ * 基于 ESP8266 使用 Arduino 开发的低功耗墨水屏应用, 具有时钟, 日历, 天气等功能, 且提供接口可自行扩展
  *
  * @author QingChenW
  */
 
 #include "config.h"
-#include "font.h"
-#include "bitmap.h"
-#include "lang.h"
 
 #include <functional>
 #include <vector>
@@ -27,6 +24,9 @@
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
 
+#include "font.h"
+#include "bitmap.h"
+#include "lang.h"
 #include "draw.h"
 #include "API.hpp"
 #include "util.h"
@@ -41,11 +41,15 @@ const char *model_name = MODEL;
 const char *version = VERSION;
 const uint32_t version_code = VERSION_CODE;
 
-std::vector<DrawPageFunc> pages;
 Ticker keyDebounce;
 EPD_CLASS epd(EPD_DRIVER(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY));
 U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 ESP8266WebServer server(80);
+std::vector<DrawPageFunc> pages;
+bool keyPressed;
+time_t sleepTimer;
+uint8_t pageCustom;
+String displayBuffer;
 
 struct Config {
     uint8_t version;          // 配置版本, 若与程序版本号不同则重置配置
@@ -69,11 +73,6 @@ struct RTCData {
     char moonPhase[10];
     uint16_t moonPhaseIcon;
 } rtcdata;
-
-bool keyPressed;
-time_t sleepTimer;
-uint8_t pageCustom;
-String displayBuffer;
 
 int8_t getBatteryLevel() {
 #if ENABLE_BATTERY_DISPLAY
@@ -106,7 +105,7 @@ bool resetConfig(bool wifi = false) {
 
 // unit: second
 void gotoSleep(uint32_t s) {
-    if (Serial) Serial.printf("Sleep for %d seconds\n", s); // 这里不能把字符串存在 Flash 里, 否则 ESP8266 的屏幕会无法刷新
+    if (Serial) Serial.printf("Sleep for %d seconds\n", s); // 这里不能把字符串存在 Flash 里, 否则墨水屏颜色会变淡
     pinMode(KEY_SWITCH, INPUT);
     // epd.hibernate();
     delay(1000);
@@ -409,10 +408,14 @@ update_timer:
 
 // TODO 适配硬件 RTC, 我这块板子上没有, 等换板子再说吧
 void setup() {
+    // BUG 上电的时候有概率墨水屏颜色会变淡, 还不知道是什么原因造成的
+    /*
 #if defined(ESP8266) && EPD_CS == 15 // ESP8266 的 GPIO15 在上电时为低电平, 会导致墨水屏被选中
     digitalWrite(EPD_CS, HIGH);
     pinMode(EPD_CS, OUTPUT);
+    delay(500);
 #endif
+    */
     u8g2Fonts.begin(epd);
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
     u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
@@ -518,7 +521,6 @@ void setup() {
         server.on("/status", HTTP_GET, []() {
             StaticJsonDocument<256> doc;
             doc["reset_reason"] = ESP.getResetReason();
-            doc["cycle_count"] = ESP.getCycleCount();
             doc["free_heap"] = ESP.getFreeHeap();
             doc["heap_fragment"] = ESP.getHeapFragmentation();
             doc["max_free_block"] = ESP.getMaxFreeBlockSize();
@@ -550,7 +552,7 @@ void setup() {
                 strncpy(config.hostname, value.c_str(), 24);
             value = server.arg("update_itv");
             if (value.length() > 0)
-                config.update_interval = max((uint32_t) value.toInt(), 10U);
+                config.update_interval = max((int32_t) value.toInt(), 300);
             value = server.arg("theme");
             if (value.length() > 0)
                 config.theme = min(max((int32_t) value.toInt(), -1), 1);
@@ -629,7 +631,7 @@ void setup() {
         }
     }
     settimeofday_cb(BoolCB());
-    Serial.println();
+    Serial.println(F("Done"));
     // XXX 这段以及 gotoSleep() 的逻辑给我写蒙了, 不知道有没有 bug
     if (SLEEP_TIMEOUT && resetReason == REASON_DEEP_SLEEP_AWAKE && rtcdata.page == 0) {
         if (time(nullptr) - rtcdata.next_update > -60) {

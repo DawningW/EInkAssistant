@@ -4,6 +4,7 @@
 const char *TEXT_LOADING = "正在初始化, 请稍候...";
 const char *TEXT_LOW_POWER = "电量不足, 请充电";
 const char *TEXT_SMART_CONFIG = "请用微信扫描二维码配置网络";
+const char *TEXT_TIME_ERROR = "无法同步时间, 请检查网络连接!";
 const char *TEXT_UPDATING_1 = "正在升级中, 请不要断开电源";
 const char *TEXT_UPDATING_2 = "升级完成后将自动重启";
 

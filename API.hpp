@@ -154,6 +154,19 @@ public:
     // 获取 HTTPClient
     HTTPClient& httpClient() { return http; }
 
+    // 从我的服务器获取当前时间戳(毫秒)
+    bool getTimestamp(uint64_t &result) {
+        return getRestfulAPI("https://api.dawncraft.cc/misc/timestamp", [&result](JsonDocument& json) {
+            if (json["code"] != 0) {
+                Serial.print(F("Get time failed, error: "));
+                Serial.println(json["msg"].as<const char*>());
+                return false;
+            }
+            result = json["data"];
+            return true;
+        });
+    }
+
     // 和风天气 - 实时天气: https://dev.qweather.com/docs/api/weather/weather-now/
     bool getWeatherNow(Weather &result, uint32_t locid) {
         return getRestfulAPI("https://devapi.qweather.com/v7/weather/now?gzip=n&key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {

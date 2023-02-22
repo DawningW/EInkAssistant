@@ -395,7 +395,7 @@ update_timer:
         u8g2Fonts.setFont(u8g2_font_wqy12_t);
         u8g2Fonts.setCursor(0, 24);
         u8g2Fonts.printf("  墨水屏智能助理 %s\n", version);
-        u8g2Fonts.println("  Copyright (C) 2022 WC");
+        u8g2Fonts.println("  Copyright (C) 2022-2023 WC");
         u8g2Fonts.println("  气象数据由 和风天气 提供");
         u8g2Fonts.println("");
         u8g2Fonts.println("  IP: " + WiFi.localIP().toString());
@@ -623,10 +623,28 @@ void setup() {
     Serial.print(F("Waiting for time sync..."));
     sleepTimer = millis();
     while (!has_set_time) {
-        delay(200);
-        if (SLEEP_TIMEOUT && resetReason == REASON_DEEP_SLEEP_AWAKE
-                && millis() - sleepTimer > 30000) {
-            Serial.println(F("Timeout"));
+        delay(500);
+        if (millis() - sleepTimer > 30000) {
+            Serial.println(F("NTP timeout"));
+            Serial.print(F("Try to use http api..."));
+            uint64_t timestamp;
+            if (api.getTimestamp(timestamp)) {
+                timeval tv = {
+                    .tv_sec = timestamp / 1000LL,
+                    .tv_usec = (timestamp % 1000L) * 1000L
+                };
+                settimeofday_cb(BoolCB());
+                settimeofday(&tv, NULL);
+                break;
+            }
+            if (!SLEEP_TIMEOUT || resetReason != REASON_DEEP_SLEEP_AWAKE) {
+                startDraw(epd);
+                u8g2Fonts.setFont(u8g2_font_wqy12_t);
+                u8g2Fonts.setForegroundColor(GxEPD_RED);
+                drawCenteredString(u8g2Fonts, epd.width() / 2, epd.height() * 3 / 4, TEXT_TIME_ERROR);
+                u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+                endDraw(epd, true);
+            }
             gotoSleep();
         }
     }

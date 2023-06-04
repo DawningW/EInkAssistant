@@ -11,6 +11,7 @@
 #include <Arduino.h>
 #include <WiFiClientSecureBearSSL.h>
 #include <ESP8266HTTPClient.h>
+#include <ArduinoUZlib.h>
 #include <ArduinoJson.h>
 
 // 以下参数请按照您的项目需求修改
@@ -95,16 +96,30 @@ private:
      * @return 是否成功请求 
      */
     bool getRestfulAPI(String url, callback cb, precall pre = precall()) {
+        static const char *headers[] = {"Content-Encoding"};
         Serial.print(F("Request "));
         Serial.println(url);
         DynamicJsonDocument doc(8192);
         for (uint8_t i = 0; i < MAX_RETRY; i++) {
             bool shouldRetry = false;
             if (http.begin(client, url)) {
+                http.collectHeaders(headers, sizeof(headers[0]) / sizeof(headers));
                 if (pre) pre();
                 int httpCode = http.GET();
                 if (httpCode == 200) {
-                    DeserializationError error = deserializeJson(doc, client);
+                    DeserializationError error;
+                    if (http.header("Content-Encoding").indexOf("gzip") > -1) {
+                        uint8_t *response = (uint8_t*) malloc(http.getSize());
+                        http.getStream().readBytes(response, http.getSize());
+                        uint8_t *buffer = nullptr;
+                        uint32_t size = 0;
+                        ArduinoUZlib::decompress(response, http.getSize(), buffer, size);
+                        error = deserializeJson(doc, buffer, size);
+                        free(buffer);
+                        free(response);
+                    } else {
+                        error = deserializeJson(doc, client);
+                    }
                     if (!error) {
                         http.end();
                         return cb(doc);
@@ -141,7 +156,7 @@ public:
         // 不安全就不安全吧, 主要是我比较懒(
         client.setInsecure();
         // 默认Buffer大小是16KB+512B......
-        client.setBufferSizes(4096, 1024);
+        client.setBufferSizes(4096, 512);
         // 默认超时时间是5000ms, 如果觉得不够长就取消下面的注释
         // http.setTimeout(10000);
     }

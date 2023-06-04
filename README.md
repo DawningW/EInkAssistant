@@ -50,6 +50,7 @@ ESP8266 支持深度休眠, 若启用深度休眠则需连接 GPIO16 和 RST 引
 - [GxEPD2](https://github.com/ZinggJM/GxEPD2)
 - [qrcode](https://github.com/ricmoo/QRCode)
 - [ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- [ArduinoUZlib](https://github.com/tignioj/ArduinoUZlib)
 
 ### 安装 U8g2_for_Adafruit_GFX 大字库补丁
 应用 U8g2_for_Adafruit_GFX/src 目录中的补丁

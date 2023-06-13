@@ -99,7 +99,6 @@ private:
         static const char *headers[] = {"Content-Encoding"};
         Serial.print(F("Request "));
         Serial.println(url);
-        DynamicJsonDocument doc(8192);
         for (uint8_t i = 0; i < MAX_RETRY; i++) {
             bool shouldRetry = false;
             if (http.begin(client, url)) {
@@ -114,16 +113,28 @@ private:
                         uint8_t *buffer = nullptr;
                         uint32_t size = 0;
                         ArduinoUZlib::decompress(response, http.getSize(), buffer, size);
-                        error = deserializeJson(doc, buffer, size);
-                        free(buffer);
                         free(response);
+
+                        DynamicJsonDocument doc(6144); // ESP8266 内存不足, 只能分配这么多
+                        error = deserializeJson(doc, buffer, size);
+                        if (!error) {
+                            bool ret = cb(doc);
+                            free(buffer); // 字符串是零拷贝的, 不能在调用回调前释放
+                            http.end();
+                            return ret;
+                        }
+
+                        free(buffer);
                     } else {
+                        DynamicJsonDocument doc(8192);
                         error = deserializeJson(doc, client);
+                        if (!error) {
+                            bool ret = cb(doc);
+                            http.end();
+                            return ret;
+                        }
                     }
-                    if (!error) {
-                        http.end();
-                        return cb(doc);
-                    } else {
+                    if (error) {
                         Serial.print(F("Parse JSON failed, error: "));
                         Serial.println(error.f_str());
                         shouldRetry = error == DeserializationError::IncompleteInput;

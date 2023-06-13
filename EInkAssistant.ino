@@ -63,11 +63,12 @@ struct Config {
 } config;
 
 struct RTCData {
-    uint32_t crc32;     // TODO 是否有必要为 RTC memory 添加 CRC 校验
-    time_t wakeup_time; // 从睡眠中唤醒时的时间(秒)
-    int8_t page;        // 当前正在显示的页面
-    time_t next_update; // 下次更新时间(秒)
-    char date[11];      // 当日天气预报的缓存
+    uint32_t crc32;       // TODO 是否有必要为 RTC memory 添加 CRC 校验
+    time_t wakeup_time;   // 从睡眠中唤醒时的时间(秒)
+    int8_t page;          // 当前正在显示的页面
+    time_t next_update;   // 下次更新时间(秒)
+    uint32_t location_id; // 当日天气预报的缓存
+    char date[11];
     char sunrise[6];
     char sunset[6];
     char moonPhase[10];
@@ -318,7 +319,8 @@ void initPages() {
         };
         bool success = api.getWeatherNow(currentWeather, config.location_id)
                     & api.getForecastHourly(hourlyForecast, config.location_id);
-        if (dailyWeather.date.substring(8, 10).toInt() != ptime->tm_mday) {
+        if (rtcdata.location_id != config.location_id ||
+                dailyWeather.date.substring(8, 10).toInt() != ptime->tm_mday) {
             success &= api.getForecastDaily(dailyForecast, config.location_id);
             strcpy(rtcdata.date, dailyWeather.date.c_str());
             strcpy(rtcdata.sunrise, dailyWeather.sunrise.c_str());
@@ -326,6 +328,7 @@ void initPages() {
             strcpy(rtcdata.moonPhase, dailyWeather.moonPhase.c_str());
             rtcdata.moonPhaseIcon = dailyWeather.moonPhaseIcon;
         }
+        rtcdata.location_id = config.location_id;
 
         startDraw(epd);
         bool isSleeping = SLEEP_TIMEOUT && ESP.getResetInfoPtr()->reason == REASON_DEEP_SLEEP_AWAKE;

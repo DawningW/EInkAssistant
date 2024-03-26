@@ -234,11 +234,11 @@ void drawForecastDaily(DailyForecast &forecast) {
     DailyWeather &weather = *forecast.weather;
     // Draw sunrise, sunset and moon phase
     u8g2Fonts.setFont(u8g2_font_wqy12_t);
-    u8g2Fonts.setCursor(130, 28);
+    u8g2Fonts.setCursor(epd.width() - 84, 28);
     u8g2Fonts.printf("日出%s", weather.sunrise.c_str());
-    u8g2Fonts.setCursor(130, 41);
+    u8g2Fonts.setCursor(epd.width() - 84, 41);
     u8g2Fonts.printf("日落%s", weather.sunset.c_str());
-    drawCenteredString(u8g2Fonts, 154, 54, weather.moonPhase.c_str());
+    drawCenteredString(u8g2Fonts, epd.width() - 60, 54, weather.moonPhase.c_str());
     // Draw moon icon
     u8g2Fonts.setFont(u8g2_font_qweather_icon_16);
     const char *icon = getWeatherIcon(weather.moonPhaseIcon);

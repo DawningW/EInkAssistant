@@ -1,7 +1,7 @@
 /**
  * E-Ink Assistant 墨水屏智能助理
  *
- * 基于 ESP8266 使用 Arduino 开发的低功耗墨水屏应用, 具有时钟, 日历, 天气等功能, 且提供接口可自行扩展
+ * 基于 ESP8266/ESP32 使用 Arduino 开发的低功耗墨水屏应用, 具有时钟, 日历, 天气等功能, 且提供接口可自行扩展
  *
  * @author QingChenW
  */
@@ -10,17 +10,34 @@
 
 #include <functional>
 #include <vector>
-#include <TZ.h>
 #include <time.h>
+#if defined(ESP8266)
 #include <user_interface.h>
 #include <coredecls.h>
 #include <smartconfig.h>
+#elif defined(ESP32)
+#include <esp_system.h>
+#include <esp_wifi.h>
+#include <esp_sntp.h>
+#endif
 #include <Arduino.h>
 #include <Ticker.h>
+#if defined(ESP8266)
+#include <Updater.h>
 #include <ESP_EEPROM.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
+#define RTC_DATA_ATTR
+typedef ESP8266WebServer WebServer;
+#elif defined(ESP32)
+#include <Update.h>
+#include <EEPROM.h>
+#include <WiFi.h>
+#include <ESPmDNS.h>
+#include <WebServer.h>
+#include <detail/mimetable.h>
+#endif
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
 
@@ -44,7 +61,7 @@ const uint32_t version_code = VERSION_CODE;
 Ticker keyDebounce;
 EPD_CLASS epd(EPD_DRIVER(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY));
 U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
-ESP8266WebServer server(80);
+WebServer server(80);
 std::vector<DrawPageFunc> pages;
 bool keyPressed;
 time_t sleepTimer;
@@ -62,7 +79,7 @@ struct Config {
     char bilibili_cookie[36]; // B站cookie(SESSDATA)
 } config;
 
-struct RTCData {
+RTC_DATA_ATTR struct RTCData {
     uint32_t crc32;       // TODO 是否有必要为 RTC memory 添加 CRC 校验
     time_t wakeup_time;   // 从睡眠中唤醒时的时间(秒)
     int8_t page;          // 当前正在显示的页面
@@ -85,12 +102,17 @@ int8_t getBatteryLevel() {
 
 bool resetConfig(bool wifi = false) {
     if (wifi) {
+#if defined(ESP8266)
         struct station_config conf;
-        *conf.ssid = 0;
-        *conf.password = 0;
+        memset(&conf, 0, sizeof(conf));
         ETS_UART_INTR_DISABLE();
         wifi_station_set_config(&conf);
         ETS_UART_INTR_ENABLE();
+#elif defined(ESP32)
+        wifi_config_t conf;
+        memset(&conf, 0, sizeof(conf));
+        esp_wifi_set_config(WIFI_IF_STA, &conf);
+#endif
     }
     config.version = version_code;
     strcpy(config.hostname, product_name);
@@ -112,8 +134,14 @@ void gotoSleep(uint32_t s) {
     delay(1000);
     // 从深度睡眠中唤醒也会导致 RTC timer 被清零, 所以存在 RTC memory 里
     rtcdata.wakeup_time = time(nullptr) + s;
+#if defined(ESP8266)
     ESP.rtcUserMemoryWrite(0, (uint32_t*) &rtcdata, sizeof(RTCData));
     ESP.deepSleep(s * 1000000UL, WAKE_RF_DEFAULT);
+#elif defined(ESP32)
+    if (s > 0)
+        esp_sleep_enable_timer_wakeup(s * 1000000UL);
+    esp_deep_sleep_start();
+#endif
 }
 
 // auto calculate sleep time by update interval
@@ -123,8 +151,12 @@ void gotoSleep() {
         // 要休眠的时间小于一分钟, 可能是还没到点就刷新了
         sleep_time = config.update_interval;
     }
+#if defined(ESP8266)
     time_t max_time = ESP.deepSleepMax() / 1000000;
     gotoSleep(min(sleep_time, max_time));
+#elif defined(ESP32)
+    gotoSleep(sleep_time);
+#endif
 }
 
 void checkBattery() {
@@ -138,7 +170,9 @@ void checkBattery() {
 }
 
 void prepareOTA() {
+#ifdef ESP8266
     WiFiUDP::stopAll();
+#endif
     startDraw(epd);
     epd.fillTriangle(epd.width() / 2, 8, epd.width() / 2 - 24, 32, epd.width() / 2 + 24, 32, GxEPD_BLACK);
     epd.fillRect(epd.width() / 2 - 12, 32, 24, 42, GxEPD_BLACK);
@@ -283,7 +317,7 @@ void nextPage() {
 
 IRAM_ATTR void onKeyPressed() {
     keyDebounce.once_ms(20, []() {
-        if (digitalRead(KEY_SWITCH) == LOW) {
+        if (digitalRead(KEY_SWITCH) == KEY_TRIGGER_LEVEL) {
             keyPressed = true;
         }
     });
@@ -331,7 +365,14 @@ void initPages() {
         rtcdata.location_id = config.location_id;
 
         startDraw(epd);
-        bool isSleeping = SLEEP_TIMEOUT && ESP.getResetInfoPtr()->reason == REASON_DEEP_SLEEP_AWAKE;
+        bool isSleeping = false;
+#if SLEEP_TIMEOUT > 0
+#if defined(ESP8266)
+        isSleeping = ESP.getResetInfoPtr()->reason == REASON_DEEP_SLEEP_AWAKE;
+#elif defined(ESP32)
+        isSleeping = esp_reset_reason() == ESP_RST_DEEPSLEEP;
+#endif
+#endif
         drawTitleBar(title.c_str(), isSleeping, WiFi.RSSI(), getBatteryLevel());
         drawWeatherNow(currentWeather);
         drawForecastHourly(hourlyForecast);
@@ -419,6 +460,9 @@ void setup() {
     delay(500);
 #endif
     */
+#ifdef ESP32
+    SPI.begin(EPD_CLK, -1, EPD_MOSI, EPD_CS);
+#endif
     u8g2Fonts.begin(epd);
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
     u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
@@ -432,9 +476,15 @@ void setup() {
     Serial.println(version);
     Serial.println(F("Made by QingChenW with love"));
 
+#if defined(ESP8266)
+#define RST_REASON_DEEP_SLEEP REASON_DEEP_SLEEP_AWAKE
     uint32_t resetReason = ESP.getResetInfoPtr()->reason;
+#elif defined(ESP32)
+#define RST_REASON_DEEP_SLEEP ESP_RST_DEEPSLEEP
+    uint32_t resetReason = esp_reset_reason();
+#endif
     // 这里不判断 SLEEP_TIMEOUT 是因为我要的效果是只要从休眠中唤醒就不显示加载界面
-    if (resetReason != REASON_DEEP_SLEEP_AWAKE) {
+    if (resetReason != RST_REASON_DEEP_SLEEP) {
 #if !ENABLE_LOADING_SCREEN
         epd.init(0);
         epd.clearScreen();
@@ -446,7 +496,9 @@ void setup() {
         endDraw(epd, true);
 #endif
     } else {
+#ifdef ESP8266
         ESP.rtcUserMemoryRead(0, (uint32_t*) &rtcdata, sizeof(RTCData));
+#endif
         // 从 RTC memory 里取出唤醒时的时间, 并判断是否需要继续休眠
         timeval tv;
         tv.tv_sec = rtcdata.wakeup_time;
@@ -461,12 +513,18 @@ void setup() {
         Serial.printf_P(PSTR("Update config from %d to %d\n"), config.version, version_code);
         resetConfig();
     }
-    if (resetReason != REASON_DEEP_SLEEP_AWAKE)
+    if (resetReason != RST_REASON_DEEP_SLEEP)
         delay(3000); // 如果去掉延时, 建议不要显示加载界面
 
+#if defined(ESP8266)
     volatile bool has_set_time = false;
     settimeofday_cb([&has_set_time](bool sntp) { has_set_time = true; });
     configTime(TIMEZONE, NTP_SERVERS);
+#elif defined(ESP32)
+    static volatile bool has_set_time = false;
+    sntp_set_time_sync_notification_cb([](struct timeval *tv) { has_set_time = true; });
+    configTzTime(TIMEZONE, NTP_SERVERS);
+#endif
     Serial.print(F("WiFi connecting"));
     WiFi.persistent(true);
     WiFi.setAutoReconnect(true);
@@ -485,7 +543,7 @@ void setup() {
             Serial.println(WiFi.localIP());
             break;
         } else {
-            if (SLEEP_TIMEOUT && resetReason == REASON_DEEP_SLEEP_AWAKE) {
+            if (SLEEP_TIMEOUT && resetReason == RST_REASON_DEEP_SLEEP) {
                 Serial.println(F("Failed, try connect next time"));
                 gotoSleep();
             }
@@ -495,8 +553,12 @@ void setup() {
             u8g2Fonts.setFont(u8g2_font_wqy12_t);
             drawCenteredString(u8g2Fonts, epd.width() / 2, epd.height() - 12, TEXT_SMART_CONFIG);
             endDraw(epd, true);
+#if defined(ESP8266)
             smartconfig_set_type(SC_TYPE_ESPTOUCH_AIRKISS);
             WiFi.beginSmartConfig();
+#elif defined(ESP32)
+            WiFi.beginSmartConfig(SC_TYPE_ESPTOUCH_AIRKISS);
+#endif
             while (!WiFi.smartConfigDone()) {
                 delay(1000);
                 Serial.print('.');
@@ -506,7 +568,7 @@ void setup() {
     WiFi.setHostname(config.hostname);
 
     initPages();
-    if (!SLEEP_TIMEOUT || resetReason != REASON_DEEP_SLEEP_AWAKE) {
+    if (!SLEEP_TIMEOUT || resetReason != RST_REASON_DEEP_SLEEP) {
         server.on("/", HTTP_GET, []() {
             server.send(200, MIME_TYPE(html), F("Hello World!"));
         });
@@ -516,17 +578,29 @@ void setup() {
             doc["model"] = model_name;
             doc["version"] = version;
             doc["version_code"] = version_code;
+#if defined(ESP8266)
             doc["sdk_version"] = ESP.getFullVersion();
+#elif defined(ESP32)
+            doc["sdk_version"] = ESP.getSdkVersion();
+#endif
             String str;
             serializeJson(doc, str);
             server.send(200, MIME_TYPE(json), str);
         });
         server.on("/status", HTTP_GET, []() {
             StaticJsonDocument<256> doc;
+#if defined(ESP8266)
             doc["reset_reason"] = ESP.getResetReason();
             doc["free_heap"] = ESP.getFreeHeap();
             doc["heap_fragment"] = ESP.getHeapFragmentation();
             doc["max_free_block"] = ESP.getMaxFreeBlockSize();
+#elif defined(ESP32)
+            doc["reset_reason"] = esp_reset_reason();
+            doc["free_heap"] = ESP.getFreeHeap();
+            doc["heap_max_free_block"] = ESP.getMaxAllocHeap();
+            doc["free_psram"] = ESP.getFreePsram();
+            doc["psram_max_free_block"] = ESP.getMaxAllocPsram();
+#endif
             doc["RSSI"] = WiFi.RSSI();
             doc["page"] = rtcdata.page;
             doc["next_update"] = rtcdata.next_update;
@@ -555,13 +629,13 @@ void setup() {
                 strncpy(config.hostname, value.c_str(), 24);
             value = server.arg("update_itv");
             if (value.length() > 0)
-                config.update_interval = max((int32_t) value.toInt(), 300);
+                config.update_interval = max((int) value.toInt(), 300);
             value = server.arg("theme");
             if (value.length() > 0)
-                config.theme = min(max((int32_t) value.toInt(), -1), 1);
+                config.theme = min(max((int) value.toInt(), -1), 1);
             value = server.arg("hour_step");
             if (value.length() > 0)
-                config.hour_step = max((int32_t) value.toInt(), 1);
+                config.hour_step = max((int) value.toInt(), 1);
             value = server.arg("locid");
             if (value.length() > 0)
                 config.location_id = value.toInt();
@@ -628,19 +702,26 @@ void setup() {
     while (!has_set_time) {
         delay(500);
         if (millis() - sleepTimer > 30000) {
-            Serial.println(F("NTP timeout"));
-            Serial.print(F("Try to use http api..."));
-            uint64_t timestamp;
-            if (api.getTimestamp(timestamp)) {
-                timeval tv = {
-                    .tv_sec = timestamp / 1000LL,
-                    .tv_usec = (timestamp % 1000L) * 1000L
-                };
-                settimeofday_cb(BoolCB());
-                settimeofday(&tv, NULL);
-                break;
-            }
-            if (!SLEEP_TIMEOUT || resetReason != REASON_DEEP_SLEEP_AWAKE) {
+            break;
+        }
+    }
+#if defined(ESP8266)
+    settimeofday_cb(BoolCB());
+#elif defined(ESP32)
+    sntp_set_time_sync_notification_cb(nullptr);
+#endif
+    if (!has_set_time) {
+        Serial.println(F("NTP timeout"));
+        Serial.print(F("Try to use http api..."));
+        uint64_t timestamp;
+        if (api.getTimestamp(timestamp)) {
+            timeval tv = {
+                .tv_sec = timestamp / 1000LL,
+                .tv_usec = (timestamp % 1000L) * 1000L
+            };
+            settimeofday(&tv, NULL);
+        } else {
+            if (!SLEEP_TIMEOUT || resetReason != RST_REASON_DEEP_SLEEP) {
                 startDraw(epd);
                 u8g2Fonts.setFont(u8g2_font_wqy12_t);
                 u8g2Fonts.setForegroundColor(GxEPD_RED);
@@ -651,10 +732,8 @@ void setup() {
             gotoSleep();
         }
     }
-    settimeofday_cb(BoolCB());
     Serial.println(F("Done"));
-    // XXX 这段以及 gotoSleep() 的逻辑给我写蒙了, 不知道有没有 bug
-    if (SLEEP_TIMEOUT && resetReason == REASON_DEEP_SLEEP_AWAKE && rtcdata.page == 0) {
+    if (SLEEP_TIMEOUT && resetReason == RST_REASON_DEEP_SLEEP && rtcdata.page == 0) {
         if (time(nullptr) - rtcdata.next_update > -60) {
             while (time(nullptr) - rtcdata.next_update < 0)
                 delay(1000);
@@ -664,19 +743,21 @@ void setup() {
     }
     refreshPage();
 
-    pinMode(KEY_SWITCH, INPUT_PULLUP);
-    attachInterrupt(KEY_SWITCH, onKeyPressed, FALLING);
+    pinMode(KEY_SWITCH, KEY_PIN_MODE);
+    attachInterrupt(KEY_SWITCH, onKeyPressed, KEY_TRIGGER_LEVEL == LOW ? FALLING : RISING);
 }
 
 void loop() {
     checkBattery();
 
+#ifdef ESP8266
     MDNS.update();
+#endif
     server.handleClient();
     if (Update.isRunning()) return;
 
     if (keyPressed) {
-        while (digitalRead(KEY_SWITCH) == LOW)
+        while (digitalRead(KEY_SWITCH) == KEY_TRIGGER_LEVEL)
             delay(10);
         nextPage();
         keyPressed = false;

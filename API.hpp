@@ -9,8 +9,14 @@
 #define __API_HPP__
 
 #include <Arduino.h>
+#if defined(ESP8266)
 #include <WiFiClientSecureBearSSL.h>
 #include <ESP8266HTTPClient.h>
+using BearSSL::WiFiClientSecure;
+#elif defined(ESP32)
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+#endif
 #include <ArduinoUZlib.h>
 #include <ArduinoJson.h>
 
@@ -84,7 +90,7 @@ class API {
     using precall = std::function<void()>;
 
 private:
-    BearSSL::WiFiClientSecure client;
+    WiFiClientSecure client;
     HTTPClient http;
 
     /**
@@ -107,7 +113,7 @@ private:
                 int httpCode = http.GET();
                 if (httpCode == 200) {
                     DeserializationError error;
-                    if (http.header("Content-Encoding").indexOf("gzip") > -1) {
+                    if (http.header(headers[0]).indexOf("gzip") > -1) {
                         uint8_t *response = (uint8_t*) malloc(http.getSize());
                         http.getStream().readBytes(response, http.getSize());
                         uint8_t *buffer = nullptr;
@@ -143,9 +149,14 @@ private:
                     Serial.print(F("Get failed, error: "));
                     if (httpCode < 0) {
                         Serial.println(http.errorToString(httpCode));
-                        shouldRetry = httpCode == HTTPC_ERROR_CONNECTION_FAILED ||
-                                        httpCode == HTTPC_ERROR_CONNECTION_LOST ||
-                                        httpCode == HTTPC_ERROR_READ_TIMEOUT;
+                        shouldRetry =
+#if defined(ESP8266)
+                            httpCode == HTTPC_ERROR_CONNECTION_FAILED ||
+#elif defined(ESP32)
+                            httpCode == HTTPC_ERROR_CONNECTION_REFUSED ||
+#endif
+                            httpCode == HTTPC_ERROR_CONNECTION_LOST ||
+                            httpCode == HTTPC_ERROR_READ_TIMEOUT;
                     } else {
                         Serial.println(httpCode);
                     }
@@ -166,8 +177,10 @@ public:
         // client.setFingerprint(fingerprint);
         // 不安全就不安全吧, 主要是我比较懒(
         client.setInsecure();
+#ifdef ESP8266
         // 默认Buffer大小是16KB+512B......
         client.setBufferSizes(4096, 512);
+#endif
         // 默认超时时间是5000ms, 如果觉得不够长就取消下面的注释
         // http.setTimeout(10000);
     }
@@ -175,7 +188,7 @@ public:
     ~API() {}
 
     // 获取 WiFiClient
-    BearSSL::WiFiClientSecure& wifiClient() { return client; }
+    WiFiClientSecure& wifiClient() { return client; }
 
     // 获取 HTTPClient
     HTTPClient& httpClient() { return http; }

@@ -19,10 +19,18 @@
 #define EPD_DC 0
 #define EPD_RST 2
 #define EPD_BUSY 4
+#if !defined(ESP8266) // ESP8266 不可设置 SPI 引脚
+#define EPD_CLK 4
+#define EPD_MOSI 10
+#endif
 // 墨水屏旋转方向, 0~3
 #define EPD_ROTATION 3
 // 切换界面按键引脚
 #define KEY_SWITCH 5
+// 按键引脚上下拉模式, INPUT/INPUT_PULLUP/INPUT_PULLDOWN
+#define KEY_PIN_MODE INPUT
+// 按键引脚触发方式, LOW/HIGH
+#define KEY_TRIGGER_LEVEL LOW
 
 /****************************** 软件配置 ******************************/
 // 是否启用开屏加载界面
@@ -31,12 +39,17 @@
 #define ENABLE_BATTERY_DISPLAY false
 // 电量低于多少百分比时进入休眠模式
 #define BATTERY_LOW_PERCENTAGE 5
-// 指定秒数无操作后进入休眠模式, 0为不休眠
+// 指定秒数无操作后进入休眠模式, 0 为不休眠
 #define SLEEP_TIMEOUT 180
 // 夜晚暂停更新或光线较暗时暂停更新
 #define SLEEP_ON_NIGHT false
 // 时区, 可取值请参考 TZ.h 或 https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+#if defined(ESP8266)
+#include <TZ.h>
 #define TIMEZONE TZ_Asia_Shanghai
+#elif defined(ESP32)
+#define TIMEZONE "CST-8"
+#endif
 // NTP服务器地址, 最多可填写三个, 用逗号隔开, 服务器列表请见 https://dns.icoa.cn/ntp/
 #define NTP_SERVERS "time.pool.aliyun.com", "pool.ntp.org"
 // 配网二维码内容, 可以换成你自己的链接或小程序

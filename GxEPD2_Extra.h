@@ -1,7 +1,35 @@
 #ifndef _GxEPD2_Extra_H_
 #define _GxEPD2_Extra_H_
 
+#include <epd/GxEPD2_290.h>
 #include <epd3c/GxEPD2_213c.h>
+#include <epd3c/GxEPD2_290c.h>
+
+// https://www.e-paper-display.cn/products_detail/productId=376.html, 已停产
+// GxEPD2_290.h的WIDTH改为200, HEIGHT改为200
+/*
+修改GxEPD2_290.cpp的LUTDefault_full数组为
+0x32,
+0x66, 0x66, 0x44, 0x66, 0xAA, 0x11, 0x80, 0x08, 0x11, 0x18, 0x81, 0x18, 0x11, 0x88, 0x11,
+0x88, 0x11, 0x88, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x5F, 0xAF, 0xFF, 0xFF, 0x2F, 0x00
+修改GxEPD2_290.cpp的LUTDefault_part数组为
+0x32,
+0x10, 0x18, 0x18, 0x28, 0x18, 0x18, 0x18, 0x18, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x13, 0x11, 0x22, 0x63, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00
+ */
+class GxEPD2_154_D27 : public GxEPD2_290 // 型号为HINK-E0154A05(GDEH0154D27), 主控为SSD1608(IL3820)
+{
+  public:
+    using GxEPD2_290::GxEPD2_290;
+};
+
+// GxEPD2_213_B72.h的WIDTH_VISIBLE改为104, HEIGHT改为212
+// 该屏幕不支持局部刷新, 因此还需将hasPartialUpdate和hasFastPartialUpdate改为false
+class GxEPD2_213_A07 : public GxEPD2_213_B72 // 型号为HINK-E0213A07, 主控为SSD1675A(IL3897)
+{
+  public:
+    using GxEPD2_213_B72::GxEPD2_213_B72;
+};
 
 // SES电子价签所用的墨水屏来自https://www.pervasivedisplays.com/product/2-13-e-ink-display-spectra-r2-0/
 // BUSY脚电平与微雪的2.13inch e-Paper HAT (B)相反, 其余大致相同

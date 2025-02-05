@@ -367,11 +367,15 @@ void initPages() {
         startDraw(epd);
         bool isSleeping = false;
 #if SLEEP_TIMEOUT > 0
+        if (millis() - sleepTimer >= SLEEP_TIMEOUT * 1000) {
+            isSleeping = true;
+        } else {
 #if defined(ESP8266)
-        isSleeping = ESP.getResetInfoPtr()->reason == REASON_DEEP_SLEEP_AWAKE;
+            isSleeping = ESP.getResetInfoPtr()->reason == REASON_DEEP_SLEEP_AWAKE;
 #elif defined(ESP32)
-        isSleeping = esp_reset_reason() == ESP_RST_DEEPSLEEP;
+            isSleeping = esp_reset_reason() == ESP_RST_DEEPSLEEP;
 #endif
+        }
 #endif
         drawTitleBar(title.c_str(), isSleeping, WiFi.RSSI(), getBatteryLevel());
         drawWeatherNow(currentWeather);
@@ -379,7 +383,7 @@ void initPages() {
         drawForecastDaily(dailyForecast);
         if (!success) {
             u8g2Fonts.setFont(u8g2_font_wqy12_t);
-            u8g2Fonts.setForegroundColor(GxEPD_RED);
+            u8g2Fonts.setForegroundColor(EPD_DRIVER::hasColor ? GxEPD_RED : GxEPD_BLACK);
             drawCenteredString(u8g2Fonts, epd.width() / 2, epd.height() / 2 + 6, TEXT_WEATHER_FAILED);
             u8g2Fonts.setForegroundColor(GxEPD_BLACK);
         }
@@ -439,7 +443,7 @@ update_timer:
         u8g2Fonts.setFont(u8g2_font_wqy12_t);
         u8g2Fonts.setCursor(0, 24);
         u8g2Fonts.printf("  墨水屏智能助理 %s\n", version);
-        u8g2Fonts.println("  Copyright (C) 2022-2023 WC");
+        u8g2Fonts.println("  Copyright (C) 2022-2025 WC");
         u8g2Fonts.println("  气象数据由 和风天气 提供");
         u8g2Fonts.println("");
         u8g2Fonts.println("  IP: " + WiFi.localIP().toString());
@@ -770,9 +774,13 @@ void loop() {
             tm *time = localtime(&timestamp);
             String title = datetimeToString(FORMAT_DATETIME, time);
             startDraw(epd);
-            drawTitleBar(title.c_str(), true, WiFi.RSSI(), getBatteryLevel());
-            epd.displayWindow(0, 0, epd.width(), 16);
-            epd.hibernate();
+            if (EPD_DRIVER::hasPartialUpdate) {
+                drawTitleBar(title.c_str(), true, WiFi.RSSI(), getBatteryLevel());
+                epd.displayWindow(0, 0, epd.width(), 16);
+                epd.hibernate();
+            } else {
+                refreshPage();
+            }
             gotoSleep();
         }
 #endif

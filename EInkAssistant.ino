@@ -439,6 +439,7 @@ update_timer:
         Hitokoto hitokoto = {};
         api.getHitokoto(hitokoto);
 
+        // TODO 文本排版重写
         startDraw(epd);
         u8g2Fonts.setFont(u8g2_font_wqy12_t);
         u8g2Fonts.setCursor(0, 24);
@@ -696,6 +697,12 @@ void setup() {
             }
             delay(3000);
             server.send(200, MIME_TYPE(txt), "OK");
+        });
+        server.on("/shipmode", HTTP_POST, []() {
+            startDraw(epd);
+            endDraw(epd);
+            server.send(200, MIME_TYPE(txt), "OK");
+            gotoSleep(0);
         });
         server.begin();
         MDNS.begin(config.hostname);

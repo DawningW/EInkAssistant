@@ -59,7 +59,7 @@ ESP32 无需修改外部电路即可实现深度休眠, 但目前尚未经过完
 - [U8g2_for_Adafruit_GFX](https://github.com/olikraus/U8g2_for_Adafruit_GFX)(**注意: 需要安装补丁, 请参照下方步骤**)
 - [GxEPD2](https://github.com/ZinggJM/GxEPD2)
 - [qrcode](https://github.com/ricmoo/QRCode)
-- [ArduinoJSON](https://github.com/bblanchon/ArduinoJson)
+- [ArduinoJSON](https://github.com/bblanchon/ArduinoJson)(**注意: 请安装6.21.5或以下版本，否则无法构建**)
 - [ArduinoUZlib](https://github.com/tignioj/ArduinoUZlib)
 
 ### 安装 U8g2_for_Adafruit_GFX 大字库补丁

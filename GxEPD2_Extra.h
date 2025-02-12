@@ -43,6 +43,56 @@ class GxEPD2_213_EXT3 : public GxEPD2_213c // 型号为xE2213CSxxx, 主控为IL0
     }
 };
 
+class GxEPD2_266_EXTBW :public GxEPD2_213c
+{
+  public:
+    GxEPD2_266_EXTBW(int16_t cs, int16_t dc, int16_t rst, int16_t busy) : GxEPD2_213c(cs, dc, rst, busy)
+    {
+    }
+    // 重写相关方法以对调黑色和彩色值，并通过invert参数取反实现黑白翻转
+    void clearScreen(uint8_t black_value, uint8_t color_value) 
+    {
+      GxEPD2_213c::clearScreen(color_value, black_value);
+    }
+
+    void writeScreenBuffer(uint8_t black_value, uint8_t color_value) 
+    {
+      GxEPD2_213c::writeScreenBuffer(color_value, black_value);
+    }
+
+    void writeImage(const uint8_t* black, const uint8_t* color, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) 
+    {
+      GxEPD2_213c::writeImage(color, black, x, y, w, h, !invert, mirror_y, pgm);
+    }
+
+    void writeImagePart(const uint8_t* black, const uint8_t* color, int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
+                       int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) 
+    {
+      GxEPD2_213c::writeImagePart(color, black, x_part, y_part, w_bitmap, h_bitmap, x, y, w, h, !invert, mirror_y, pgm);
+    }
+
+    void writeNative(const uint8_t* data1, const uint8_t* data2, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) 
+    {
+      GxEPD2_213c::writeNative(data2, data1, x, y, w, h, !invert, mirror_y, pgm);
+    }
+
+    void drawImage(const uint8_t* black, const uint8_t* color, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false)
+    {
+      GxEPD2_213c::drawImage(color, black, x, y, w, h, !invert, mirror_y, pgm);
+    }
+
+    void drawImagePart(const uint8_t* black, const uint8_t* color, int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
+                      int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) 
+    {
+      GxEPD2_213c::drawImagePart(color, black, x_part, y_part, w_bitmap, h_bitmap, x, y, w, h, !invert, mirror_y, pgm);
+    }
+
+    void drawNative(const uint8_t* data1, const uint8_t* data2, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) 
+    {
+      GxEPD2_213c::drawNative(data2, data1, x, y, w, h, !invert, mirror_y, pgm);
+    }
+};
+
 // https://www.pervasivedisplays.com/product/2-66-e-ink-displays/, 其他同上
 // 需深度魔改GxEPD2库, GxEPD2_290c.h的WIDTH改为152
 // GxEPD2_290c.cpp的_InitDisplay()函数的最后三行改为

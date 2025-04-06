@@ -44,14 +44,12 @@ class GxEPD2_213_EXT3 : public GxEPD2_213c // 型号为xE2213CSxxx, 主控为IL0
 };
 
 // 来源 老王 2.9元 2.13寸价签
-// 丝印为WFT0213CZ16LW
-// 对应型号应为微雪 2.13inch e-Paper HAT (D)
-// 主控为IL0373
-// 需要按3色屏幕使用
-class GxEPD2_213_Z16 :public GxEPD2_213c
+// 驱动与微雪 2.13inch e-Paper HAT (D)相同, 但需要按3色屏幕使用
+class GxEPD2_213_Z16 : public GxEPD2_213c // 型号为WFT0213CZ16, 主控为IL0373
 {
   public:
     using GxEPD2_213c::GxEPD2_213c;
+
     void clearScreen(uint8_t black_value, uint8_t color_value) 
     {
       GxEPD2_213c::clearScreen(color_value, ~black_value);

@@ -1,6 +1,6 @@
 #include "util.h"
-
-extern const char *WEEKDAYS[];
+#include "main.h"
+#include "lang.h"
 
 uint32_t calculateCRC32(const uint8_t *data, size_t length) {
     uint32_t crc = 0xffffffff;
@@ -49,4 +49,10 @@ String humanizeByte(size_t bytes) {
         str = String(bytes) + "B";
     }
     return str;
+}
+
+bool isNight(String time) {
+    if (config.theme >= 0) return config.theme;
+    uint8_t hour = time.substring(11, 13).toInt();
+    return hour < 6 || hour >= 18;
 }

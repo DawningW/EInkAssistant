@@ -1,0 +1,17 @@
+diff --git a/src/u8g2_fonts.h b/src/u8g2_fonts.h
+index 17f0a7a..0be6aaa 100644
+--- a/src/u8g2_fonts.h
++++ b/src/u8g2_fonts.h
+@@ -58,6 +58,12 @@
+ #  define U8X8_PROGMEM PROGMEM
+ #endif
+ 
++#if defined(__GNUC__) && defined(ESP8266)
++#  define U8X8_FONT_SECTION(name) U8X8_SECTION(".irom0.text." name)
++#  define u8x8_pgm_read(adr) pgm_read_byte_near(adr)
++#  define U8X8_PROGMEM PROGMEM
++#endif
++
+ #ifndef U8X8_FONT_SECTION
+ #  define U8X8_FONT_SECTION(name) 
+ #endif

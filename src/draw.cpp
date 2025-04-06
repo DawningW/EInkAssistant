@@ -1,4 +1,5 @@
 #include "draw.h"
+#include "font.h"
 
 void startDraw(EPD_CLASS &epd, int32_t bgcolor) {
     epd.init(0);
@@ -15,6 +16,40 @@ void endDraw(EPD_CLASS &epd, bool partial_update) {
 // 照Minecraft抄的(逃
 void drawCenteredString(U8G2_FOR_ADAFRUIT_GFX &u8g2, uint16_t x, uint16_t y, const char *str) {
     u8g2.drawUTF8(x - u8g2.getUTF8Width(str) / 2, y, str);
+}
+
+void drawTitleBar(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, const char *title, bool sleeping, int8_t rssi, int8_t battery) {
+    // Draw title
+    u8g2.setFont(u8g2_font_wqy12_t);
+    u8g2.drawUTF8(2, 12, title);
+    // Draw battery level
+    uint16_t x = epd.width() - 2;
+    if (battery >= 0) {
+        epd.drawRect(x - 21, 2, 19, 10, GxEPD_BLACK);
+        epd.fillRect(x - 2, 4, 2, 6, GxEPD_BLACK);
+        if (battery > 0)
+            epd.fillRect(x - 19, 4, 15 * battery / 100, 6, GxEPD_BLACK);
+        x -= 25;
+    }
+    // Draw WiFi RSSI
+    epd.fillRect(x - 11, 8, 3, 4, GxEPD_BLACK);
+    if (rssi >= -80)
+        epd.fillRect(x - 7, 5, 3, 7, GxEPD_BLACK);
+    if (rssi >= -70)
+        epd.fillRect(x - 3, 2, 3, 10, GxEPD_BLACK);
+    if (rssi == 31) { // Failure, invalid value.
+        int16_t x1 = x - 11, y1 = 2;
+        int16_t x2 = x, y2 = 12;
+        epd.drawLine(x1, y1, x2, y2, GxEPD_BLACK);
+        epd.drawLine(x2, y1, x1, y2, GxEPD_BLACK);
+    }
+    x -= 15;
+    // Draw sleep status
+    if (sleeping) {
+        u8g2.drawUTF8(x - 6, 12, "Z");
+    }
+    // Draw separator
+    epd.drawFastHLine(0, 15, epd.width(), GxEPD_BLACK);
 }
 
 // x,y is the centre poistion of the arrow and asize is the radius out from the x,y position

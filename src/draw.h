@@ -18,6 +18,7 @@ typedef EPD_TYPE<EPD_DRIVER, EPD_DRIVER::HEIGHT> EPD_CLASS;
 void startDraw(EPD_CLASS &epd, int32_t bgcolor = GxEPD_WHITE);
 void endDraw(EPD_CLASS &epd, bool partial_update = false);
 void drawCenteredString(U8G2_FOR_ADAFRUIT_GFX &u8g2, uint16_t x, uint16_t y, const char *str);
+void drawTitleBar(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, const char *title, bool sleeping, int8_t rssi, int8_t battery);
 void drawArrow(EPD_CLASS &epd, uint16_t x, uint16_t y, int16_t asize, float aangle, uint16_t pwidth, uint16_t plength);
 void drawQRCode(EPD_CLASS &epd, uint16_t x, uint16_t y, uint8_t scale, const char *text, uint8_t version = 3, uint8_t ecc = ECC_LOW);
 

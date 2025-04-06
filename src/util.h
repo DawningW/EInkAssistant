@@ -10,5 +10,6 @@ uint32_t calculateCRC32(const uint8_t *data, size_t length);
 String datetimeToString(const char *fmt, tm *ptime);
 String humanizeNumber(uint64_t number);
 String humanizeByte(size_t bytes);
+bool isNight(String time);
 
 #endif // __UTIL_H__

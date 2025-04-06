@@ -1,10 +1,8 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-// 选择使用 SMPL_2021.7.22_V2 开发板
-// #include "config_SMPL.h"
-// 选择使用 OurEDA 设计的 CoreBoard_ESP32 开发板
-// #include "config_CoreBoard.h"
+// board_config.h 为作者使用的板子的引脚定义, 不包含配置, 无需修改
+#include "board_config.h"
 
 // 型号, 用于检查更新, 如果你使用其他开发板请修改型号, 避免被小程序推送更新
 #ifndef MODEL
@@ -18,9 +16,13 @@
 /****************************** 硬件配置 ******************************/
 // 可选值参考 https://github.com/ZinggJM/GxEPD2/blob/master/examples/GxEPD2_Example/GxEPD2_display_selection_new_style.h
 // 墨水屏种类
+#ifndef EPD_TYPE
 #define EPD_TYPE GxEPD2_3C
+#endif
 // 墨水屏驱动
+#ifndef EPD_DRIVER
 #define EPD_DRIVER GxEPD2_213c
+#endif
 
 #ifndef HAS_CONFIG
 // 墨水屏引脚
@@ -33,7 +35,7 @@
 #define EPD_MOSI -1
 #endif
 // 墨水屏旋转方向, 0~3
-#define EPD_ROTATION 3
+#define EPD_ROTATION 0
 // 切换界面按键引脚
 #define KEY_SWITCH -1
 // 按键引脚上下拉模式, INPUT/INPUT_PULLUP/INPUT_PULLDOWN
@@ -50,6 +52,15 @@
 #endif
 
 /****************************** 软件配置 ******************************/
+// 根据屏幕大小选择布局, 可取值如下:
+// -1 // 根据屏幕分辨率自动计算最合适的布局
+// UISize::XS // 1.54 寸, 分辨率 <=200x200
+// UISize::SM // 2.13/2.66/2.9 寸
+// UISize::MD // 3.7 寸
+// UISize::LG // 4.2 寸
+// UISize::XL // 5.8/7.5 寸, 分辨率 >= 640x480
+// UISize::CUSTOM // 自定义布局, 在 ui_custom.cpp 中自行适配屏幕
+#define UI_RESOLUTION -1
 // 是否启用开屏加载界面
 #define ENABLE_LOADING_SCREEN true
 // 是否启用电量显示

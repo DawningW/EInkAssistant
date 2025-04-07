@@ -5,6 +5,7 @@
 #include "bitmap.h"
 #include "util.h"
 
+template <>
 void UIImpl<UISize::SM>::loading(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     startDraw(epd);
     u8g2.setFont(u8g2_font_wqy12_t);
@@ -12,6 +13,7 @@ void UIImpl<UISize::SM>::loading(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     endDraw(epd, true);
 }
 
+template <>
 void UIImpl<UISize::SM>::smartConfig(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     startDraw(epd);
     drawQRCode(epd, (epd.width() - 58) / 2, 16, 2, WIFI_CONFIG_URL);
@@ -20,6 +22,7 @@ void UIImpl<UISize::SM>::smartConfig(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2
     endDraw(epd, true);
 }
 
+template <>
 void UIImpl<UISize::SM>::syncTimeFailed(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     startDraw(epd);
     u8g2.setFont(u8g2_font_wqy12_t);
@@ -29,6 +32,7 @@ void UIImpl<UISize::SM>::syncTimeFailed(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u
     endDraw(epd, true);
 }
 
+template <>
 void UIImpl<UISize::SM>::lowPower(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     startDraw(epd);
     u8g2.setFont(u8g2_font_wqy12_t);
@@ -36,6 +40,7 @@ void UIImpl<UISize::SM>::lowPower(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     endDraw(epd);
 }
 
+template <>
 void UIImpl<UISize::SM>::update(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     startDraw(epd);
     epd.fillTriangle(epd.width() / 2, 8, epd.width() / 2 - 24, 32, epd.width() / 2 + 24, 32, GxEPD_BLACK);
@@ -103,6 +108,7 @@ static void drawForecastDaily(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, Daily
     u8g2.drawUTF8(epd.width() - u8g2.getUTF8Width(icon) - 4, 48, icon);
 }
 
+template <>
 void UIImpl<UISize::SM>::titleBar(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm *ptime, bool sleeping, int8_t rssi, int8_t battery) {
     String title = datetimeToString(FORMAT_DATETIME, ptime);
     startDraw(epd);
@@ -111,6 +117,7 @@ void UIImpl<UISize::SM>::titleBar(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, t
     epd.hibernate();
 }
 
+template <>
 void UIImpl<UISize::SM>::weather(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm *ptime, bool sleeping, int8_t rssi, int8_t battery) {
     String title = datetimeToString(FORMAT_DATETIME, ptime);
     Weather currentWeather = {};
@@ -157,6 +164,7 @@ void UIImpl<UISize::SM>::weather(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm
     endDraw(epd);
 }
 
+template <>
 void UIImpl<UISize::SM>::bilibili(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     Bilibili bilibili = {};
     api.getFollower(bilibili, config.bilibili_uid);
@@ -182,6 +190,7 @@ void UIImpl<UISize::SM>::bilibili(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     endDraw(epd);
 }
 
+template <>
 void UIImpl<UISize::SM>::display(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, const String &ip, const String &text) {
     startDraw(epd);
     u8g2.setFont(u8g2_font_wqy12_t);
@@ -194,6 +203,7 @@ void UIImpl<UISize::SM>::display(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, co
     endDraw(epd);
 }
 
+template <>
 void UIImpl<UISize::SM>::about(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, const String &ip) {
     Hitokoto hitokoto = {};
     api.getHitokoto(hitokoto);

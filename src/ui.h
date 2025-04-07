@@ -12,7 +12,7 @@ enum class UISize {
     XS, SM, MD, LG, XL, CUSTOM
 };
 
-template<int WIDTH, int HEIGHT>
+template <int WIDTH, int HEIGHT>
 struct UITraits {
     static constexpr UISize value =
         ((int) UI_RESOLUTION > -1) ? (UISize) UI_RESOLUTION :
@@ -23,35 +23,22 @@ struct UITraits {
         UISize::SM;
 };
 
-#define UI_IMPL_FUNCS { \
-public: \
-    static void loading(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2); \
-    static void smartConfig(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2); \
-    static void syncTimeFailed(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2); \
-    static void lowPower(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2); \
-    static void update(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2); \
-    static void titleBar(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm *ptime, bool sleeping, int8_t rssi, int8_t battery); \
-    static void weather(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm *ptime, bool sleeping, int8_t rssi, int8_t battery); \
-    static void bilibili(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2); \
-    static void display(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, const String &ip, const String &text); \
-    static void about(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, const String &ip); \
-}
+template <UISize SIZE>
+class UIImpl {
+public:
+    static constexpr UISize size = SIZE;
+    static void loading(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2);
+    static void smartConfig(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2);
+    static void syncTimeFailed(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2);
+    static void lowPower(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2);
+    static void update(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2);
+    static void titleBar(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm *ptime, bool sleeping, int8_t rssi, int8_t battery);
+    static void weather(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm *ptime, bool sleeping, int8_t rssi, int8_t battery);
+    static void bilibili(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2);
+    static void display(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, const String &ip, const String &text);
+    static void about(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, const String &ip);
+};
 
-template<UISize size>
-class UIImpl {};
-template<>
-class UIImpl<UISize::XS> UI_IMPL_FUNCS;
-template<>
-class UIImpl<UISize::SM> UI_IMPL_FUNCS;
-template<>
-class UIImpl<UISize::MD> UI_IMPL_FUNCS;
-template<>
-class UIImpl<UISize::LG> UI_IMPL_FUNCS;
-template<>
-class UIImpl<UISize::XL> UI_IMPL_FUNCS;
-template<>
-class UIImpl<UISize::CUSTOM> UI_IMPL_FUNCS;
-
-#define UI UIImpl<UITraits<EPD_DRIVER::WIDTH, EPD_DRIVER::HEIGHT>::value>
+typedef UIImpl<UITraits<EPD_DRIVER::WIDTH, EPD_DRIVER::HEIGHT>::value> UI;
 
 #endif // __UI_H__

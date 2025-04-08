@@ -31,6 +31,24 @@ class GxEPD2_213_A07 : public GxEPD2_213_B72 // 型号为HINK-E0213A07, 主控�
     using GxEPD2_213_B72::GxEPD2_213_B72;
 };
 
+// 来源 老王 2.13寸价签
+// 屏幕同微雪2.13inch e-Paper HAT (B) V3/2.13inch e-Paper Module (C)
+// 虽然丝印与微雪的一模一样, 但应该是定制版, 空闲时为低电平, 且只支持黑白
+// 由于这块屏幕需使用内置的LUT, 但GxEPD2的IL0373单色屏驱动没有一个是用内置LUT的, 只有GxEPD2_213c是, 且与微雪官方例程几乎完全一致
+// 所以决定基于GxEPD2_213c魔改, 但GxEPD2_213c是三色屏幕, 虽然都使用IL0373, 但改动较大
+// 1. 将_InitDisplay()和_Init_Part()函数中写寄存器0x50的值改为0x97 (表示白色边框, 如需黑色边框改为0x57)
+// 2. 驱动单色屏时0x13命令才表示发送黑色数据, 因此需修改clearScreen, writeScreenBuffer, writeImage, writeImagePart函数
+//    注释掉原发送0x13命令和数据的代码, 将0x10改为0x13
+// 这样修改后可以使用GxEPD2_BW, 无需使用GxEPD2_3C, 更省内存
+class GxEPD2_213_Z16 : public GxEPD2_213c // 型号为WFT0213CZ16, 主控为IL0373
+{
+  public:
+    GxEPD2_213_Z16(int16_t cs, int16_t dc, int16_t rst, int16_t busy) : GxEPD2_213c(cs, dc, rst, busy)
+    {
+      this->_busy_level = HIGH;
+    }
+};
+
 // SES电子价签所用的墨水屏来自https://www.pervasivedisplays.com/product/2-13-e-ink-display-spectra-r2-0/
 // BUSY脚电平与微雪的2.13inch e-Paper HAT (B)相反, 其余大致相同
 // 建议采用官方库驱动https://github.com/rei-vilo/PDLS_EXT3_Basic, 但本项目为了兼容其他墨水屏就魔改GxEPD2了
@@ -43,98 +61,45 @@ class GxEPD2_213_EXT3 : public GxEPD2_213c // 型号为xE2213CSxxx, 主控为IL0
     }
 };
 
-// 来源 老王 2.9元 2.13寸价签
-// 驱动与微雪 2.13inch e-Paper HAT (D)相同, 但需要按3色屏幕使用
-class GxEPD2_213_Z16 : public GxEPD2_213c // 型号为WFT0213CZ16, 主控为IL0373
+// 来源 老王 2.9寸价签
+// 屏幕同微雪2.9inch e-Paper Module (B) V3/2.9inch e-Paper Module (C)
+// 和老王的2.13寸价签同理, 基于GxEPD2_290c魔改
+// 1. 将_PowerOff()函数中写寄存器0x50的值改为0x17
+// 2. 将_InitDisplay()和_Init_Part()函数中写寄存器0x50的值改为0x97 (表示白色边框, 如需黑色边框改为0x57)
+// 3. 驱动单色屏时0x13命令才表示发送黑色数据, 因此需修改clearScreen, writeScreenBuffer, writeImage, writeImagePart函数
+//    注释掉原发送0x13命令和数据的代码, 将0x10改为0x13
+// 这样修改后可以使用GxEPD2_BW, 无需使用GxEPD2_3C, 更省内存
+class GxEPD2_290_Z10 : public GxEPD2_290c // 型号为WFT0290CZ10, 主控为IL0373
 {
   public:
-    using GxEPD2_213c::GxEPD2_213c;
-
-    void clearScreen(uint8_t black_value, uint8_t color_value) 
+    GxEPD2_290_Z10(int16_t cs, int16_t dc, int16_t rst, int16_t busy) : GxEPD2_290c(cs, dc, rst, busy)
     {
-      GxEPD2_213c::clearScreen(color_value, ~black_value);
-    }
-
-    void writeScreenBuffer(uint8_t black_value, uint8_t color_value) 
-    {
-      GxEPD2_213c::writeScreenBuffer(color_value, ~black_value);
-    }
-
-    void writeImage(const uint8_t* black, const uint8_t* color, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) 
-    {
-      GxEPD2_213c::writeImage(color, black, x, y, w, h, !invert, mirror_y, pgm);
-    }
-
-    void writeImagePart(const uint8_t* black, const uint8_t* color, int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
-                       int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) 
-    {
-      GxEPD2_213c::writeImagePart(color, black, x_part, y_part, w_bitmap, h_bitmap, x, y, w, h, !invert, mirror_y, pgm);
-    }
-
-    void writeNative(const uint8_t* data1, const uint8_t* data2, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false)
-    {
-      GxEPD2_213c::writeNative(data2, data1, x, y, w, h, !invert, mirror_y, pgm);
-    }
-
-    void drawImage(const uint8_t* black, const uint8_t* color, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false)
-    {
-      GxEPD2_213c::drawImage(color, black, x, y, w, h, !invert, mirror_y, pgm);
-    }
-
-    void drawImagePart(const uint8_t* black, const uint8_t* color, int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
-                      int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) 
-    {
-      GxEPD2_213c::drawImagePart(color, black, x_part, y_part, w_bitmap, h_bitmap, x, y, w, h, !invert, mirror_y, pgm);
-    }
-
-    void drawNative(const uint8_t* data1, const uint8_t* data2, int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) 
-    {
-      GxEPD2_213c::drawNative(data2, data1, x, y, w, h, !invert, mirror_y, pgm);
-    }
-
-    void clearScreen(uint8_t value = 0xFF) override
-    {
-      clearScreen(value, value);
-    }
-
-    void writeScreenBuffer(uint8_t value = 0xFF) override
-    {
-      writeScreenBuffer(value, value);
-    }
-
-    void writeImage(const uint8_t bitmap[], int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) override
-    {
-      writeImage(bitmap, bitmap, x, y, w, h, invert, mirror_y, pgm);
-    }
-
-    void writeImagePart(const uint8_t bitmap[], int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
-                       int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false) override
-    {
-      writeImagePart(bitmap, bitmap, x_part, y_part, w_bitmap, h_bitmap, x, y, w, h, invert, mirror_y, pgm);
-    }
-
-    void drawImage(const uint8_t bitmap[], int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false)
-    {
-      drawImage(bitmap, bitmap, x, y, w, h, invert, mirror_y, pgm);
-    }
-
-    void drawImagePart(const uint8_t bitmap[], int16_t x_part, int16_t y_part, int16_t w_bitmap, int16_t h_bitmap,
-                      int16_t x, int16_t y, int16_t w, int16_t h, bool invert = false, bool mirror_y = false, bool pgm = false)
-    {
-      drawImagePart(bitmap, bitmap, x_part, y_part, w_bitmap, h_bitmap, x, y, w, h, invert, mirror_y, pgm);
+      this->_busy_level = HIGH;
     }
 };
 
-// https://www.pervasivedisplays.com/product/2-66-e-ink-displays/, 其他同上
+// 来自https://www.pervasivedisplays.com/product/2-66-e-ink-displays/, 其他同GxEPD2_213_EXT3
 // 需深度魔改GxEPD2库, GxEPD2_290c.h的WIDTH改为152
 // GxEPD2_290c.cpp的_InitDisplay()函数的最后三行改为
 // _writeData (WIDTH);
 // _writeData (HEIGHT >> 8);
 // _writeData (HEIGHT & 0xff);
-class GxEPD2_266_EXT3 : public GxEPD2_290c // 型号为xE2266CSxxx, 主控为IL0373
+class GxEPD2_266_EXT3 : public GxEPD2_290c // 型号为xE2266CSxxx, 主控为IL0373, QE2266HS051也用这个
 {
   public:
     GxEPD2_266_EXT3(int16_t cs, int16_t dc, int16_t rst, int16_t busy) : GxEPD2_290c(cs, dc, rst, busy)
+    {
+      this->_busy_level = HIGH;
+    }
+};
+
+// 来源 老王 4.2寸价签
+// 屏幕同微雪4.2inch e-Paper Module (B) V2
+// 基于GxEPD2_420c魔改, 该屏幕为三色屏, 仅BUSY引脚电平相反, 其他无需修改
+class GxEPD2_420c_Z15 : public GxEPD2_420c // 型号为WFT0420CZ15, 主控为IL0398
+{
+  public:
+    GxEPD2_420c_Z15(int16_t cs, int16_t dc, int16_t rst, int16_t busy) : GxEPD2_420c(cs, dc, rst, busy)
     {
       this->_busy_level = HIGH;
     }

@@ -61,6 +61,8 @@
 // UISize::XL // 5.8/7.5 寸, 分辨率 >= 640x480
 // UISize::CUSTOM // 自定义布局, 在 ui_custom.cpp 中自行适配屏幕
 #define UI_RESOLUTION -1
+// 是否使用完整字库 (推荐启用, 否则连“霾”字都没有)
+#define USE_FULL_GB2313_FONT true
 // 是否启用开屏加载界面
 #define ENABLE_LOADING_SCREEN true
 // 是否启用电量显示
@@ -86,6 +88,9 @@
 #define NTP_SERVERS "time.pool.aliyun.com", "pool.ntp.org"
 // 配网二维码内容, 可以换成你自己的链接或小程序
 #define WIFI_CONFIG_URL "http://wx.ai-thinker.com/api/old/wifi/config"
+// 如果配网失败可以取消注释并填入 WiFi 和密码 (注意: 除 ESP32-C5 外均只支持 2.4g WiFi)
+// #define WIFI_SSID "SSID"
+// #define WIFI_PASSWORD "PASSWORD"
 // 和风天气 API KEY
 #define QWEATHER_KEY "your_qweather_key"
 

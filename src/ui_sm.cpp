@@ -51,6 +51,15 @@ void UIImpl<UISize::SM>::update(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     endDraw(epd);
 }
 
+template <>
+void UIImpl<UISize::SM>::titleBar(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm *ptime, bool sleeping, int8_t rssi, int8_t battery) {
+    String title = datetimeToString(FORMAT_DATETIME, ptime);
+    startDraw(epd);
+    drawTitleBar(epd, u8g2, title.c_str(), sleeping, rssi, battery);
+    epd.displayWindow(0, 0, epd.width(), 16);
+    epd.hibernate();
+}
+
 static void drawWeatherNow(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, Weather &weather) {
     // Draw temperature and humidity
     u8g2.setFont(u8g2_font_helvB14_tf);
@@ -64,8 +73,8 @@ static void drawWeatherNow(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, Weather 
     }
     u8g2.setFont(u8g2_font_wqy12_t);
     u8g2.setCursor(x, 52);
-    u8g2.printf("%s %d级", weather.windDir.c_str(), weather.windScale);
-    // Draw Weather icon and text
+    u8g2.printf("%s %s级", weather.windDir.c_str(), weather.windScale.c_str());
+    // Draw weather icon and text
     u8g2.setFont(u8g2_font_qweather_icon_16);
     drawCenteredString(u8g2, epd.width() / 2, 40, getWeatherIcon(weather.icon, isNight(weather.time)));
     u8g2.setFont(u8g2_font_wqy12_t);
@@ -106,15 +115,6 @@ static void drawForecastDaily(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, Daily
     u8g2.setFont(u8g2_font_qweather_icon_16);
     const char *icon = getWeatherIcon(weather.moonPhaseIcon);
     u8g2.drawUTF8(epd.width() - u8g2.getUTF8Width(icon) - 4, 48, icon);
-}
-
-template <>
-void UIImpl<UISize::SM>::titleBar(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm *ptime, bool sleeping, int8_t rssi, int8_t battery) {
-    String title = datetimeToString(FORMAT_DATETIME, ptime);
-    startDraw(epd);
-    drawTitleBar(epd, u8g2, title.c_str(), sleeping, rssi, battery);
-    epd.displayWindow(0, 0, epd.width(), 16);
-    epd.hibernate();
 }
 
 template <>

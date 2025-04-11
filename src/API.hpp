@@ -29,13 +29,17 @@ using BearSSL::WiFiClientSecure;
 struct Weather {
     String time;
     int8_t temp;
-    int8_t humidity;
-    int16_t wind360;
-    String windDir;
-    int8_t windScale;
-    uint8_t windSpeed;
     uint16_t icon;
     String text;
+    int16_t wind360;
+    String windDir;
+    String windScale;
+    uint8_t windSpeed;
+    int8_t humidity;
+    uint16_t pressure;
+    // for weather now
+    int8_t feelsTemp;
+    uint8_t visibility;
 };
 
 struct DailyWeather {
@@ -46,19 +50,35 @@ struct DailyWeather {
     uint16_t moonPhaseIcon;
     int8_t tempMax;
     int8_t tempMin;
-    int8_t humidity;
     uint16_t iconDay;
     String textDay;
     uint16_t iconNight;
     String textNight;
     int16_t wind360Day;
     String windDirDay;
-    int8_t windScaleDay;
+    String windScaleDay;
     uint8_t windSpeedDay;
     int16_t wind360Night;
     String windDirNight;
-    int8_t windScaleNight;
+    String windScaleNight;
     uint8_t windSpeedNight;
+    int8_t humidity;
+    uint16_t pressure;
+    uint8_t visibility;
+    int8_t uvIndex;
+};
+
+struct AQI {
+    uint16_t aqi;
+    uint8_t level;
+    String category;
+    String primary;
+    float pm10;
+    float pm2p5;
+    float no2;
+    float so2;
+    float co;
+    float o3;
 };
 
 struct HourlyForecast {
@@ -208,7 +228,7 @@ public:
 
     // 和风天气 - 实时天气: https://dev.qweather.com/docs/api/weather/weather-now/
     bool getWeatherNow(Weather &result, uint32_t locid) {
-        return getRestfulAPI("https://devapi.qweather.com/v7/weather/now?gzip=n&key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+        return getRestfulAPI("https://devapi.qweather.com/v7/weather/now?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
             if (strcmp(json["code"], "200") != 0) {
                 Serial.print(F("Get weather failed, error: "));
                 Serial.println(json["code"].as<const char*>());
@@ -217,55 +237,71 @@ public:
             JsonObject now = json["now"];
             result.time = now["obsTime"].as<const char*>();
             result.temp = atoi(now["temp"]);
-            result.humidity = atoi(now["humidity"]);
-            result.wind360 = atoi(now["wind360"]);
-            result.windDir = now["windDir"].as<const char*>();
-            result.windScale = atoi(now["windScale"]);
-            result.windSpeed = atoi(now["windSpeed"]);
             result.icon = atoi(now["icon"]);
             result.text = now["text"].as<const char*>();
+            result.wind360 = atoi(now["wind360"]);
+            result.windDir = now["windDir"].as<const char*>();
+            result.windScale = now["windScale"].as<const char*>();
+            result.windSpeed = atoi(now["windSpeed"]);
+            result.humidity = atoi(now["humidity"]);
+            result.pressure = atoi(now["pressure"]);
+            result.feelsTemp = atoi(now["feelsLike"]);
+            result.visibility = atoi(now["vis"]);
             return true;
         });
     }
 
     // 和风天气 - 逐小时天气预报: https://dev.qweather.com/docs/api/weather/weather-hourly-forecast/
     bool getForecastHourly(HourlyForecast &result, uint32_t locid) {
-        return getRestfulAPI("https://devapi.qweather.com/v7/weather/24h?gzip=n&key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+        return getRestfulAPI("https://devapi.qweather.com/v7/weather/24h?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
             if (strcmp(json["code"], "200") != 0) {
                 Serial.print(F("Get hourly forecast failed, error: "));
                 Serial.println(json["code"].as<const char*>());
                 return false;
             }
             uint8_t i, hours = json["hourly"].size();
-            for (i = 0; i < result.length; i++) {
+            size_t max_length = std::min(json["hourly"].size(), (size_t) result.length);
+            for (i = 0; i < max_length; i++) {
                 if (i * result.interval >= hours) break;
                 Weather &weather = result.weather[i];
                 JsonObject hourly = json["hourly"][i * result.interval];
                 weather.time = hourly["fxTime"].as<const char*>();
                 weather.temp = atoi(hourly["temp"]);
-                weather.humidity = atoi(hourly["humidity"]);
-                weather.wind360 = atoi(hourly["wind360"]);
-                weather.windDir = hourly["windDir"].as<const char*>();
-                weather.windScale = atoi(hourly["windScale"]);
-                weather.windSpeed = atoi(hourly["windSpeed"]);
                 weather.icon = atoi(hourly["icon"]);
                 weather.text = hourly["text"].as<const char*>();
+                weather.wind360 = atoi(hourly["wind360"]);
+                weather.windDir = hourly["windDir"].as<const char*>();
+                weather.windScale = hourly["windScale"].as<const char*>();
+                weather.windSpeed = atoi(hourly["windSpeed"]);
+                weather.humidity = atoi(hourly["humidity"]);
+                weather.pressure = atoi(hourly["pressure"]);
             }
             result.length = i;
             return true;
         });
     }
 
-    // 和风天气 - 逐天天气预报: https://dev.qweather.com/docs/api/weather/weather-daily-forecast/
+    // 和风天气 - 每日天气预报: https://dev.qweather.com/docs/api/weather/weather-daily-forecast/
     bool getForecastDaily(DailyForecast &result, uint32_t locid) {
-        return getRestfulAPI("https://devapi.qweather.com/v7/weather/3d?gzip=n&key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+        uint8_t day = 3;
+        if (result.length > 15) {
+            day = 30;
+        } else if (result.length > 10) {
+            day = 15;
+        } else if (result.length > 7) {
+            day = 10;
+        } else if (result.length > 3) {
+            day = 7;
+        }
+        return getRestfulAPI("https://devapi.qweather.com/v7/weather/" + String(day) + "d?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
             if (strcmp(json["code"], "200") != 0) {
                 Serial.print(F("Get daily forecast failed, error: "));
                 Serial.println(json["code"].as<const char*>());
                 return false;
             }
             uint8_t i;
-            for (i = 0; i < result.length; i++) {
+            size_t max_length = std::min(json["daily"].size(), (size_t) result.length);
+            for (i = 0; i < max_length; i++) {
                 DailyWeather &weather = result.weather[i];
                 JsonObject daily = json["daily"][i];
                 weather.date = daily["fxDate"].as<const char*>();
@@ -275,21 +311,47 @@ public:
                 weather.moonPhaseIcon = atoi(daily["moonPhaseIcon"]);
                 weather.tempMax = atoi(daily["tempMax"]);
                 weather.tempMin = atoi(daily["tempMin"]);
-                weather.humidity = atoi(daily["humidity"]);
                 weather.iconDay = atoi(daily["iconDay"]);
                 weather.textDay = daily["textDay"].as<const char*>();
                 weather.iconNight = atoi(daily["iconNight"]);
                 weather.textNight = daily["textNight"].as<const char*>();
                 weather.wind360Day = atoi(daily["wind360Day"]);
                 weather.windDirDay = daily["windDirDay"].as<const char*>();
-                weather.windScaleDay = atoi(daily["windScaleDay"]);
+                weather.windScaleDay = daily["windScaleDay"].as<const char*>();
                 weather.windSpeedDay = atoi(daily["windSpeedDay"]);
                 weather.wind360Night = atoi(daily["wind360Night"]);
                 weather.windDirNight = daily["windDirNight"].as<const char*>();
-                weather.windScaleNight = atoi(daily["windScaleNight"]);
+                weather.windScaleNight = daily["windScaleNight"].as<const char*>();
                 weather.windSpeedNight = atoi(daily["windSpeedNight"]);
+                weather.humidity = atoi(daily["humidity"]);
+                weather.pressure = atoi(daily["pressure"]);
+                weather.visibility = atoi(daily["vis"]);
+                weather.uvIndex = atoi(daily["uvIndex"]);
             }
             result.length = i;
+            return true;
+        });
+    }
+
+    // 和风天气 - 实时空气质量: https://dev.qweather.com/docs/api/air/air-now/
+    bool getAQI(AQI &result, uint32_t locid) {
+        return getRestfulAPI("https://devapi.qweather.com/v7/air/now?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+            if (strcmp(json["code"], "200") != 0) {
+                Serial.print(F("Get AQI failed, error: "));
+                Serial.println(json["code"].as<const char*>());
+                return false;
+            }
+            JsonObject now = json["now"];
+            result.aqi = atoi(now["aqi"]);
+            result.level = atoi(now["level"]);
+            result.category = now["category"].as<const char*>();
+            result.primary = now["primary"].as<const char*>();
+            result.pm10 = atof(now["pm10"]);
+            result.pm2p5 = atof(now["pm2p5"]);
+            result.no2 = atof(now["no2"]);
+            result.so2 = atof(now["so2"]);
+            result.co = atof(now["co"]);
+            result.o3 = atof(now["o3"]);
             return true;
         });
     }

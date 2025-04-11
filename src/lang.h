@@ -9,6 +9,7 @@ const char TEXT_UPDATING_1[] = "正在升级中, 请不要断开电源";
 const char TEXT_UPDATING_2[] = "升级完成后将自动重启";
 
 const char WEEKDAYS[][7] = {"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
+const char FORMAT_DATETIME_SHORT[] = "%%Y/%%m/%%d %%H:%%M";
 const char FORMAT_DATETIME[] = "%%Y年%%m月%%d日 %s %%H:%%M";
 const char TEXT_WEATHER_FAILED[] = "获取天气数据失败!";
 

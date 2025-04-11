@@ -308,7 +308,14 @@ void setup() {
     Serial.print(F("WiFi connecting"));
     WiFi.persistent(true);
     WiFi.setAutoReconnect(true);
-    WiFi.begin();
+    WiFi.begin(
+#ifdef WIFI_SSID
+        WIFI_SSID
+#endif
+#ifdef WIFI_PASSWORD
+        , WIFI_PASSWORD
+#endif
+    );
     while (true) {
         wl_status_t status = WiFi.status();
         uint8_t retry = 0;

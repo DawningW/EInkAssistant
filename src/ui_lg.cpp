@@ -28,7 +28,7 @@ void UIImpl<UISize::LG>::syncTimeFailed(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u
     u8g2.setFont(u8g2_font_wqy14_t);
     u8g2.setForegroundColor(COLOR_ERROR);
     drawCenteredString(u8g2, epd.width() / 2, epd.height() * 2 / 3, TEXT_TIME_ERROR);
-    u8g2.setForegroundColor(GxEPD_BLACK);
+    u8g2.setForegroundColor(COLOR_PRIMARY);
     endDraw(epd, true);
 }
 
@@ -43,8 +43,8 @@ void UIImpl<UISize::LG>::lowPower(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
 template <>
 void UIImpl<UISize::LG>::update(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     startDraw(epd);
-    epd.fillTriangle(epd.width() / 2, 20, epd.width() / 2 - 24, 44, epd.width() / 2 + 24, 44, GxEPD_BLACK);
-    epd.fillRect(epd.width() / 2 - 12, 44, 24, 42, GxEPD_BLACK);
+    epd.fillTriangle(epd.width() / 2, 20, epd.width() / 2 - 24, 44, epd.width() / 2 + 24, 44, COLOR_PRIMARY);
+    epd.fillRect(epd.width() / 2 - 12, 44, 24, 42, COLOR_PRIMARY);
     u8g2.setFont(u8g2_font_wqy14_t);
     drawCenteredString(u8g2, epd.width() / 2, epd.height() - 36, TEXT_UPDATING_1);
     drawCenteredString(u8g2, epd.width() / 2, epd.height() - 16, TEXT_UPDATING_2);
@@ -72,7 +72,7 @@ static void drawWeatherNow(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, Weather 
     u8g2.setCursor(40, 64);
     u8g2.printf("体感 %d°C", weather.feelsTemp);
     // Draw separator
-    epd.drawFastVLine(epd.width() / 4 + 8, 16, 54, GxEPD_BLACK);
+    epd.drawFastVLine(epd.width() / 4 + 8, 16, 54, COLOR_PRIMARY);
     // Draw weather details
     u8g2.setFont(u8g2_font_wqy14_t);
     u8g2.setCursor(epd.width() / 4 + 24, 32);
@@ -82,7 +82,7 @@ static void drawWeatherNow(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, Weather 
     u8g2.setCursor(epd.width() / 4 + 24, 64);
     u8g2.printf("紫外线: %d  %s %d", today.uvIndex, aqi.category.c_str(), aqi.aqi);
     // Draw separator
-    epd.drawFastVLine(epd.width() * 3 / 4 - 8, 16, 54, GxEPD_BLACK);
+    epd.drawFastVLine(epd.width() * 3 / 4 - 8, 16, 54, COLOR_PRIMARY);
     // Draw sun and moon info
     u8g2.setCursor(epd.width() * 3 / 4, 32);
     u8g2.printf("日出%s", today.sunrise.c_str());
@@ -185,15 +185,15 @@ void UIImpl<UISize::LG>::weather(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm
     startDraw(epd);
     drawTitleBar(epd, u8g2, title.c_str(), sleeping, rssi, battery);
     drawWeatherNow(epd, u8g2, currentWeather, dailyWeather[0], aqi);
-    epd.drawFastHLine(0, 70, epd.width(), GxEPD_BLACK);
+    epd.drawFastHLine(0, 70, epd.width(), COLOR_PRIMARY);
     drawForecastHourly(epd, u8g2, hourlyForecast);
-    epd.drawFastHLine(0, epd.height() - 100, epd.width(), GxEPD_BLACK);
+    epd.drawFastHLine(0, epd.height() - 100, epd.width(), COLOR_PRIMARY);
     drawForecastDaily(epd, u8g2, ptime->tm_wday, dailyForecast);
     if (!success) {
         u8g2.setFont(u8g2_font_wqy14_t);
         u8g2.setForegroundColor(COLOR_ERROR);
         drawCenteredString(u8g2, epd.width() / 2, epd.height() / 2 + 8, TEXT_WEATHER_FAILED);
-        u8g2.setForegroundColor(GxEPD_BLACK);
+        u8g2.setForegroundColor(COLOR_PRIMARY);
     }
     endDraw(epd);
 }
@@ -208,7 +208,7 @@ void UIImpl<UISize::LG>::bilibili(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     }
 
     startDraw(epd);
-    epd.drawInvertedBitmap(16, (epd.height() - 65) / 2, IMG_BILI_LOGO_2, 68, 65, GxEPD_BLACK);
+    epd.drawInvertedBitmap(16, (epd.height() - 65) / 2, IMG_BILI_LOGO_2, 68, 65, COLOR_PRIMARY);
     uint16_t x = 100;
     uint16_t cx = (x + epd.width()) / 2;
     uint16_t cy = epd.height() / 2;

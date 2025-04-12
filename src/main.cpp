@@ -247,7 +247,7 @@ void setup() {
     SPI.begin(EPD_CLK, -1, EPD_MOSI, EPD_CS);
 #endif
     u8g2Fonts.begin(epd);
-    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setForegroundColor(COLOR_PRIMARY);
     u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
     epd.setRotation(EPD_ROTATION);
 

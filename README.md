@@ -7,13 +7,11 @@
 
 本程序高度自由可配置, 且提供接口可自行扩展, 目前自带的扩展有一言, Bilibili 粉丝数显示等
 
-![2.13寸墨水屏](doc/2.13.jpg)
+![2.13 寸墨水屏](doc/2.13.jpg)
 
-![4.2寸墨水屏](doc/4.2.jpg)
+![4.2 寸墨水屏](doc/4.2.jpg)
 
-演示视频:
-
-<iframe src="//player.bilibili.com/player.html?isOutside=true&aid=1251165708&bvid=BV1UJ4m1e7sX&cid=1452084253&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+演示视频: [bilibili](https://www.bilibili.com/video/BV1UJ4m1e7sX/)
 
 ## 所需硬件
 
@@ -39,7 +37,7 @@ ESP32 没有特殊要求, ESP32/ESP32-C3/ESP32-S2/ESP32-S3 均可使用
 - SM: 2.13/2.66/2.9 寸
 - MD: 3.5 寸, >=300x200
 - LG: 4.2 寸, >=400x300
-- XL: 7.5 寸, >=800x480
+- XL: 7.5 寸, >=640x480
 - CUSTOM: 为所有界面的空实现, 供用户自行适配屏幕或自定义布局
 
 支持微雪, 大连佳显, 汉朔等 GxEPD2 库支持的各种屏幕

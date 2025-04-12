@@ -28,7 +28,7 @@ void UIImpl<UISize::SM>::syncTimeFailed(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u
     u8g2.setFont(u8g2_font_wqy12_t);
     u8g2.setForegroundColor(COLOR_ERROR);
     drawCenteredString(u8g2, epd.width() / 2, epd.height() * 3 / 4, TEXT_TIME_ERROR);
-    u8g2.setForegroundColor(GxEPD_BLACK);
+    u8g2.setForegroundColor(COLOR_PRIMARY);
     endDraw(epd, true);
 }
 
@@ -43,8 +43,8 @@ void UIImpl<UISize::SM>::lowPower(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
 template <>
 void UIImpl<UISize::SM>::update(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     startDraw(epd);
-    epd.fillTriangle(epd.width() / 2, 8, epd.width() / 2 - 24, 32, epd.width() / 2 + 24, 32, GxEPD_BLACK);
-    epd.fillRect(epd.width() / 2 - 12, 32, 24, 42, GxEPD_BLACK);
+    epd.fillTriangle(epd.width() / 2, 8, epd.width() / 2 - 24, 32, epd.width() / 2 + 24, 32, COLOR_PRIMARY);
+    epd.fillRect(epd.width() / 2 - 12, 32, 24, 42, COLOR_PRIMARY);
     u8g2.setFont(u8g2_font_wqy12_t);
     drawCenteredString(u8g2, epd.width() / 2, epd.height() - 16, TEXT_UPDATING_1);
     drawCenteredString(u8g2, epd.width() / 2, epd.height() - 4, TEXT_UPDATING_2);
@@ -84,9 +84,9 @@ static void drawWeatherNow(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, Weather 
 static void drawForecastHourly(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, HourlyForecast &forecast) {
     // Draw grid
     uint16_t grid_w = epd.width() / forecast.length;
-    epd.drawFastHLine(0, 57, epd.width(), GxEPD_BLACK);
+    epd.drawFastHLine(0, 57, epd.width(), COLOR_PRIMARY);
     for (uint8_t i = 1; i < forecast.length; i++) {
-        epd.drawFastVLine(grid_w * i, 58, epd.height() - 58, GxEPD_BLACK);
+        epd.drawFastVLine(grid_w * i, 58, epd.height() - 58, COLOR_PRIMARY);
     }
     // Draw hourly forecast
     u8g2.setFont(u8g2_font_wqy12_t);
@@ -159,7 +159,7 @@ void UIImpl<UISize::SM>::weather(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm
         u8g2.setFont(u8g2_font_wqy12_t);
         u8g2.setForegroundColor(COLOR_ERROR);
         drawCenteredString(u8g2, epd.width() / 2, epd.height() / 2 + 6, TEXT_WEATHER_FAILED);
-        u8g2.setForegroundColor(GxEPD_BLACK);
+        u8g2.setForegroundColor(COLOR_PRIMARY);
     }
     endDraw(epd);
 }
@@ -174,8 +174,8 @@ void UIImpl<UISize::SM>::bilibili(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2) {
     }
 
     startDraw(epd);
-    // epd.drawInvertedBitmap(8, (epd.height() - 55) / 2, IMG_BILI_LOGO, 52, 55, GxEPD_BLACK);
-    epd.drawInvertedBitmap(8, (epd.height() - 65) / 2, IMG_BILI_LOGO_2, 68, 65, GxEPD_BLACK);
+    // epd.drawInvertedBitmap(8, (epd.height() - 55) / 2, IMG_BILI_LOGO, 52, 55, COLOR_PRIMARY);
+    epd.drawInvertedBitmap(8, (epd.height() - 65) / 2, IMG_BILI_LOGO_2, 68, 65, COLOR_PRIMARY);
     uint16_t x = 80;
     u8g2.setFont(u8g2_font_fub30_tf);
     drawCenteredString(u8g2, (x + epd.width() - 8) / 2, 56, humanizeNumber(bilibili.follower).c_str());

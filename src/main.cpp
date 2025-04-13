@@ -508,8 +508,8 @@ void setup() {
         uint64_t timestamp;
         if (api.getTimestamp(timestamp)) {
             timeval tv = {
-                .tv_sec = timestamp / 1000LL,
-                .tv_usec = (timestamp % 1000L) * 1000L
+                .tv_sec = (time_t) (timestamp / 1000LL),
+                .tv_usec = (long) ((timestamp % 1000L) * 1000L)
             };
             settimeofday(&tv, NULL);
         } else {
@@ -553,7 +553,7 @@ void loop() {
     if (rtcdata.page == 0) {
 #if SLEEP_TIMEOUT > 0
         if (millis() - sleepTimer >= SLEEP_TIMEOUT * 1000) {
-            if (EPD_DRIVER::hasPartialUpdate) {
+            if (EPD_DRIVER::hasPartialUpdate && EPD_DRIVER::usePartialUpdateWindow) {
                 time_t timestamp = time(nullptr);
                 tm *time = localtime(&timestamp);
                 UI::titleBar(epd, u8g2Fonts, time, true, WiFi.RSSI(), getBatteryLevel());

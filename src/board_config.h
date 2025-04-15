@@ -6,6 +6,7 @@
 #define EPD_RST 2
 #define EPD_BUSY 4
 #define EPD_ROTATION 3
+#define SUPPORT_PARTIAL_UPDATE false
 #define KEY_PIN_MODE INPUT_PULLUP
 #define KEY_SWITCH 5
 #define KEY_TRIGGER_LEVEL LOW
@@ -22,6 +23,7 @@
 #define EPD_CLK 4
 #define EPD_MOSI 10
 #define EPD_ROTATION 3
+#define SUPPORT_PARTIAL_UPDATE false
 #define KEY_PIN_MODE INPUT_PULLUP
 #define KEY_SWITCH 0
 #define KEY_TRIGGER_LEVEL LOW

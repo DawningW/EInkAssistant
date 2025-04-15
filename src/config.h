@@ -36,6 +36,8 @@
 #endif
 // 墨水屏旋转方向, 0~3
 #define EPD_ROTATION 0
+// 屏幕是否支持局部刷新 (若休眠时屏幕只显示标题栏说明屏幕或驱动不支持局部刷新, 请将宏设为 false)
+#define SUPPORT_PARTIAL_UPDATE EPD_DRIVER::hasPartialUpdate
 // 切换界面按键引脚
 #define KEY_SWITCH -1
 // 按键引脚上下拉模式, INPUT/INPUT_PULLUP/INPUT_PULLDOWN

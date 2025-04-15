@@ -553,7 +553,7 @@ void loop() {
     if (rtcdata.page == 0) {
 #if SLEEP_TIMEOUT > 0
         if (millis() - sleepTimer >= SLEEP_TIMEOUT * 1000) {
-            if (EPD_DRIVER::hasPartialUpdate && EPD_DRIVER::usePartialUpdateWindow) {
+            if (SUPPORT_PARTIAL_UPDATE) {
                 time_t timestamp = time(nullptr);
                 tm *time = localtime(&timestamp);
                 UI::titleBar(epd, u8g2Fonts, time, true, WiFi.RSSI(), getBatteryLevel());

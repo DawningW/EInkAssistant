@@ -60,42 +60,41 @@ void UIImpl<UISize::LG>::titleBar(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, t
     epd.hibernate();
 }
 
-static void drawWeatherNow(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, Weather &weather, DailyWeather &today, AQI &aqi) {
+static void drawWeatherNow(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, uint16_t y, Weather &weather, DailyWeather &today, AQI &aqi) {
     // Draw weather icon and text
     u8g2.setFont(u8g2_font_qweather_icon_16);
-    u8g2.drawUTF8(8, 56, getWeatherIcon(weather.icon, isNight(weather.time)));
+    u8g2.drawUTF8(8, y + 40, getWeatherIcon(weather.icon, isNight(weather.time)));
     u8g2.setFont(u8g2_font_wqy14_t);
-    u8g2.setCursor(40, 32);
+    u8g2.setCursor(40, y + 16);
     u8g2.printf("%s  %d°C", weather.text.c_str(), weather.temp);
-    u8g2.setCursor(40, 48);
+    u8g2.setCursor(40, y + 32);
     u8g2.printf("%d ~ %d°C", today.tempMin, today.tempMax);
-    u8g2.setCursor(40, 64);
+    u8g2.setCursor(40, y + 48);
     u8g2.printf("体感 %d°C", weather.feelsTemp);
     // Draw separator
-    epd.drawFastVLine(epd.width() / 4 + 8, 16, 54, COLOR_PRIMARY);
+    epd.drawFastVLine(epd.width() / 4 + 8, y, 54, COLOR_PRIMARY);
     // Draw weather details
     u8g2.setFont(u8g2_font_wqy14_t);
-    u8g2.setCursor(epd.width() / 4 + 24, 32);
+    u8g2.setCursor(epd.width() / 4 + 24, y + 16);
     u8g2.printf("%s %s级  湿度: %d%%", weather.windDir.c_str(), weather.windScale.c_str(), weather.humidity);
-    u8g2.setCursor(epd.width() / 4 + 24, 48);
+    u8g2.setCursor(epd.width() / 4 + 24, y + 32);
     u8g2.printf("气压: %d  能见度: %d KM", weather.pressure, weather.visibility);
-    u8g2.setCursor(epd.width() / 4 + 24, 64);
+    u8g2.setCursor(epd.width() / 4 + 24, y + 48);
     u8g2.printf("紫外线: %d  %s %d", today.uvIndex, aqi.category.c_str(), aqi.aqi);
     // Draw separator
-    epd.drawFastVLine(epd.width() * 3 / 4 - 8, 16, 54, COLOR_PRIMARY);
+    epd.drawFastVLine(epd.width() * 3 / 4 - 8, y, 54, COLOR_PRIMARY);
     // Draw sun and moon info
-    u8g2.setCursor(epd.width() * 3 / 4, 32);
+    u8g2.setCursor(epd.width() * 3 / 4, y + 16);
     u8g2.printf("日出%s", today.sunrise.c_str());
-    u8g2.setCursor(epd.width() * 3 / 4, 48);
+    u8g2.setCursor(epd.width() * 3 / 4, y + 32);
     u8g2.printf("日落%s", today.sunset.c_str());
-    u8g2.setCursor(epd.width() * 3 / 4, 64);
-    drawCenteredString(u8g2, epd.width() * 3 / 4 + 32, 64, today.moonPhase.c_str());
+    drawCenteredString(u8g2, epd.width() * 3 / 4 + 32, y + 48, today.moonPhase.c_str());
     u8g2.setFont(u8g2_font_qweather_icon_16);
     const char *icon = getWeatherIcon(today.moonPhaseIcon);
-    u8g2.drawUTF8(epd.width() - u8g2.getUTF8Width(icon) - 8, 56, icon);
+    u8g2.drawUTF8(epd.width() - u8g2.getUTF8Width(icon) - 8, y + 40, icon);
 }
 
-static void drawForecastHourly(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, HourlyForecast &forecast) {
+static void drawForecastHourly(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, uint16_t y, uint16_t h, HourlyForecast &forecast) {
     uint16_t grid_w = epd.width() / forecast.length;
     int8_t min_temp = forecast.weather[0].temp;
     int8_t max_temp = forecast.weather[0].temp;
@@ -110,35 +109,45 @@ static void drawForecastHourly(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, Hour
             max_temp = weather.temp;
         }
         uint16_t x = grid_w * i + grid_w / 2;
-        drawCenteredString(u8g2, x, 84, weather.time.substring(11, 16).c_str());
+        drawCenteredString(u8g2, x, y + 14, weather.time.substring(11, 16).c_str());
         u8g2.setFont(u8g2_font_qweather_icon_16);
-        drawCenteredString(u8g2, x, 112, getWeatherIcon(weather.icon, isNight(weather.time)));
+        drawCenteredString(u8g2, x, y + 42, getWeatherIcon(weather.icon, isNight(weather.time)));
         u8g2.setFont(u8g2_font_wqy14_t);
         String temp = String(weather.temp) + "°C";
-        drawCenteredString(u8g2, x, 126, temp.c_str());
+        drawCenteredString(u8g2, x, y + 56, temp.c_str());
     }
+#if SHOW_WEATHER_HOURLY_CURVE == true
     // Draw temperature curve
     uint16_t prev_x = 0;
     uint16_t prev_y = 0;
     for (uint8_t i = 0; i < forecast.length; i++) {
         Weather &weather = forecast.weather[i];
-        uint16_t x = grid_w * i + grid_w / 2;
-        uint16_t y = (uint16_t) map(weather.temp, min_temp, max_temp, epd.height() - 100 - 12, 126 + 12);
-        epd.drawCircle(x, y, 4, COLOR_PRIMARY);
+        uint16_t point_x = grid_w * i + grid_w / 2;
+        uint16_t point_y = (uint16_t) map(weather.temp, min_temp, max_temp, y + h - 12, y + 56 + 12);
+        epd.drawCircle(point_x, point_y, 4, COLOR_PRIMARY);
         if (i > 0) {
-            epd.drawLine(prev_x, prev_y, x, y, COLOR_PRIMARY);
+            epd.drawLine(prev_x, prev_y, point_x, point_y, COLOR_PRIMARY);
         }
-        prev_x = x;
-        prev_y = y;
+        prev_x = point_x;
+        prev_y = point_y;
     }
+#endif
 }
 
-static void drawForecastDaily(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, int dayOfWeek, DailyForecast &forecast) {
+static void drawForecastDaily(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, uint16_t y, uint16_t h, int dayOfWeek, DailyForecast &forecast) {
     uint16_t grid_w = epd.width() / forecast.length;
+    int8_t min_temp = forecast.weather[0].tempMin;
+    int8_t max_temp = forecast.weather[0].tempMax;
     // Draw daily forecast
     u8g2.setFont(u8g2_font_wqy14_t);
     for (uint8_t i = 0; i < forecast.length; i++) {
         DailyWeather &weather = forecast.weather[i];
+        if (weather.tempMin < min_temp) {
+            min_temp = weather.tempMin;
+        }
+        if (weather.tempMax > max_temp) {
+            max_temp = weather.tempMax;
+        }
         uint16_t x = grid_w * i + grid_w / 2;
         const char *dayText = nullptr;
         if (i == 0) {
@@ -148,17 +157,38 @@ static void drawForecastDaily(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, int d
         } else {
             dayText = WEEKDAYS[(dayOfWeek + i) % 7];
         }
-        drawCenteredString(u8g2, x, epd.height() - 78, dayText);
+        drawCenteredString(u8g2, x, y + 18, dayText);
         String date = weather.date.substring(5, 10);
-        drawCenteredString(u8g2, x, epd.height() - 64, date.c_str());
+        drawCenteredString(u8g2, x, y + 32, date.c_str());
         u8g2.setFont(u8g2_font_qweather_icon_16);
-        drawCenteredString(u8g2, x, epd.height() - 38, getWeatherIcon(weather.iconDay, isNight(weather.date)));
+        drawCenteredString(u8g2, x, y + 60, getWeatherIcon(weather.iconDay, isNight(weather.date)));
         u8g2.setFont(u8g2_font_wqy14_t);
         String temp = String(weather.tempMin) + "~" + String(weather.tempMax) + "°C";
-        drawCenteredString(u8g2, x, epd.height() - 22, temp.c_str());
+        drawCenteredString(u8g2, x, y + h - 18, temp.c_str());
         String wind = String(weather.windScaleDay) + "级";
-        drawCenteredString(u8g2, x, epd.height() - 8, wind.c_str());
+        drawCenteredString(u8g2, x, y + h - 4, wind.c_str());
     }
+#if SHOW_WEATHER_DAILY_CURVE == true
+    // Draw temperature curve
+    uint16_t prev_x = 0;
+    uint16_t prev_y1 = 0;
+    uint16_t prev_y2 = 0;
+    for (uint8_t i = 0; i < forecast.length; i++) {
+        DailyWeather &weather = forecast.weather[i];
+        uint16_t point_x = grid_w * i + grid_w / 2;
+        uint16_t point_y1 = (uint16_t) map(weather.tempMin, min_temp, max_temp, y + 60 + 8, y + h - 32 - 8);
+        uint16_t point_y2 = (uint16_t) map(weather.tempMax, min_temp, max_temp, y + 60 + 8, y + h - 32 - 8);
+        epd.drawCircle(point_x, point_y1, 2, COLOR_PRIMARY);
+        epd.drawCircle(point_x, point_y2, 2, COLOR_PRIMARY);
+        if (i > 0) {
+            epd.drawLine(prev_x, prev_y1, point_x, point_y1, COLOR_PRIMARY);
+            epd.drawLine(prev_x, prev_y2, point_x, point_y2, COLOR_PRIMARY);
+        }
+        prev_x = point_x;
+        prev_y1 = point_y1;
+        prev_y2 = point_y2;
+    }
+#endif
 }
 
 template <>
@@ -184,11 +214,22 @@ void UIImpl<UISize::LG>::weather(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm
 
     startDraw(epd);
     drawTitleBar(epd, u8g2, title.c_str(), sleeping, rssi, battery);
-    drawWeatherNow(epd, u8g2, currentWeather, dailyWeather[0], aqi);
-    epd.drawFastHLine(0, 70, epd.width(), COLOR_PRIMARY);
-    drawForecastHourly(epd, u8g2, hourlyForecast);
-    epd.drawFastHLine(0, epd.height() - 100, epd.width(), COLOR_PRIMARY);
-    drawForecastDaily(epd, u8g2, ptime->tm_wday, dailyForecast);
+    uint16_t y = 16;
+    drawWeatherNow(epd, u8g2, y, currentWeather, dailyWeather[0], aqi);
+    y += 54;
+#if SHOW_WEATHER_HOURLY_CURVE == true && SHOW_WEATHER_DAILY_CURVE == false
+    uint16_t h = (epd.height() - y) - 100;
+#elif SHOW_WEATHER_HOURLY_CURVE == false && SHOW_WEATHER_DAILY_CURVE == true
+    uint16_t h = 60;
+#else
+    uint16_t h = (epd.height() - y) * 2 / 5;
+#endif
+    epd.drawFastHLine(0, y, epd.width(), COLOR_PRIMARY);
+    drawForecastHourly(epd, u8g2, y, h, hourlyForecast);
+    y += h;
+    h = epd.height() - y;
+    epd.drawFastHLine(0, y, epd.width(), COLOR_PRIMARY);
+    drawForecastDaily(epd, u8g2, y, h, ptime->tm_wday, dailyForecast);
     if (!success) {
         u8g2.setFont(u8g2_font_wqy14_t);
         u8g2.setForegroundColor(COLOR_ERROR);

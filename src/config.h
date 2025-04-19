@@ -95,6 +95,10 @@
 // #define WIFI_PASSWORD "PASSWORD"
 // 和风天气 API KEY
 #define QWEATHER_KEY "your_qweather_key"
+// 是否显示按小时天气预报温度折线 (仅当屏幕大小足够显示时生效, 例如 3.5 寸以上)
+#define SHOW_WEATHER_HOURLY_CURVE false
+// 是否显示按天天气预报温度折线 (仅当屏幕大小足够显示时生效, 例如 3.5 寸以上)
+#define SHOW_WEATHER_DAILY_CURVE true
 
 // 恭喜你, 已经完成了所有配置, 其余配置可通过小程序或 HTTP 接口修改, 详见 README.md
 

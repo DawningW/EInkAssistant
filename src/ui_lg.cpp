@@ -123,7 +123,7 @@ static void drawForecastHourly(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, uint
     for (uint8_t i = 0; i < forecast.length; i++) {
         Weather &weather = forecast.weather[i];
         uint16_t point_x = grid_w * i + grid_w / 2;
-        uint16_t point_y = (uint16_t) map(weather.temp, min_temp, max_temp, y + h - 12, y + 56 + 12);
+        uint16_t point_y = (uint16_t) map(weather.temp, min_temp, max_temp, y + 56 + 12, y + h - 12);
         epd.drawCircle(point_x, point_y, 4, COLOR_PRIMARY);
         if (i > 0) {
             epd.drawLine(prev_x, prev_y, point_x, point_y, COLOR_PRIMARY);
@@ -176,8 +176,8 @@ static void drawForecastDaily(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, uint1
     for (uint8_t i = 0; i < forecast.length; i++) {
         DailyWeather &weather = forecast.weather[i];
         uint16_t point_x = grid_w * i + grid_w / 2;
-        uint16_t point_y1 = (uint16_t) map(weather.tempMin, min_temp, max_temp, y + 60 + 8, y + h - 32 - 8);
-        uint16_t point_y2 = (uint16_t) map(weather.tempMax, min_temp, max_temp, y + 60 + 8, y + h - 32 - 8);
+        uint16_t point_y1 = (uint16_t) map(weather.tempMin, min_temp, max_temp, y + h - 32 - 8, y + 60 + 8);
+        uint16_t point_y2 = (uint16_t) map(weather.tempMax, min_temp, max_temp, y + h - 32 - 8, y + 60 + 8);
         epd.drawCircle(point_x, point_y1, 2, COLOR_PRIMARY);
         epd.drawCircle(point_x, point_y2, 2, COLOR_PRIMARY);
         if (i > 0) {

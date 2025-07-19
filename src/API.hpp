@@ -22,6 +22,9 @@ using BearSSL::WiFiClientSecure;
 
 // 以下参数请按照您的项目需求修改
 #include "config.h"
+#ifndef QWEATHER_HOST
+#define QWEATHER_HOST "devapi.qweather.com"
+#endif
 #ifndef QWEATHER_KEY
 #define QWEATHER_KEY ""
 #endif
@@ -228,7 +231,7 @@ public:
 
     // 和风天气 - 实时天气: https://dev.qweather.com/docs/api/weather/weather-now/
     bool getWeatherNow(Weather &result, uint32_t locid) {
-        return getRestfulAPI("https://devapi.qweather.com/v7/weather/now?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+        return getRestfulAPI("https://" QWEATHER_HOST "/v7/weather/now?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
             if (strcmp(json["code"], "200") != 0) {
                 Serial.print(F("Get weather failed, error: "));
                 Serial.println(json["code"].as<const char*>());
@@ -253,7 +256,7 @@ public:
 
     // 和风天气 - 逐小时天气预报: https://dev.qweather.com/docs/api/weather/weather-hourly-forecast/
     bool getForecastHourly(HourlyForecast &result, uint32_t locid) {
-        return getRestfulAPI("https://devapi.qweather.com/v7/weather/24h?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+        return getRestfulAPI("https://" QWEATHER_HOST "/v7/weather/24h?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
             if (strcmp(json["code"], "200") != 0) {
                 Serial.print(F("Get hourly forecast failed, error: "));
                 Serial.println(json["code"].as<const char*>());
@@ -293,7 +296,7 @@ public:
         } else if (result.length > 3) {
             day = 7;
         }
-        return getRestfulAPI("https://devapi.qweather.com/v7/weather/" + String(day) + "d?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+        return getRestfulAPI("https://" QWEATHER_HOST "/v7/weather/" + String(day) + "d?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
             if (strcmp(json["code"], "200") != 0) {
                 Serial.print(F("Get daily forecast failed, error: "));
                 Serial.println(json["code"].as<const char*>());
@@ -335,7 +338,7 @@ public:
 
     // 和风天气 - 实时空气质量: https://dev.qweather.com/docs/api/air/air-now/
     bool getAQI(AQI &result, uint32_t locid) {
-        return getRestfulAPI("https://devapi.qweather.com/v7/air/now?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+        return getRestfulAPI("https://" QWEATHER_HOST "/v7/air/now?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
             if (strcmp(json["code"], "200") != 0) {
                 Serial.print(F("Get AQI failed, error: "));
                 Serial.println(json["code"].as<const char*>());

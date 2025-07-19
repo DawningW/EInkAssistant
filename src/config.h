@@ -93,6 +93,8 @@
 // 如果配网失败可以取消注释并填入 WiFi 和密码 (注意: 除 ESP32-C5 外均只支持 2.4g WiFi)
 // #define WIFI_SSID "SSID"
 // #define WIFI_PASSWORD "PASSWORD"
+// 和风天气 API Host
+#define QWEATHER_HOST "devapi.qweather.com"
 // 和风天气 API KEY
 #define QWEATHER_KEY "your_qweather_key"
 // 是否显示按小时天气预报温度折线 (仅当屏幕大小足够显示时生效, 例如 3.5 寸以上)

@@ -29,6 +29,18 @@ using BearSSL::WiFiClientSecure;
 #define QWEATHER_KEY ""
 #endif
 
+struct CityInfo {
+    String name;
+    String id;
+    float lat;
+    float lon;
+    String adm2;
+    String adm1;
+    String country;
+    String tz;
+    String utcOffset;
+};
+
 struct Weather {
     String time;
     int8_t temp;
@@ -43,6 +55,12 @@ struct Weather {
     // for weather now
     int8_t feelsTemp;
     uint8_t visibility;
+};
+
+struct HourlyForecast {
+    Weather *weather;
+    uint8_t length;
+    uint8_t interval;
 };
 
 struct DailyWeather {
@@ -71,28 +89,18 @@ struct DailyWeather {
     int8_t uvIndex;
 };
 
-struct AQI {
-    uint16_t aqi;
-    uint8_t level;
-    String category;
-    String primary;
-    float pm10;
-    float pm2p5;
-    float no2;
-    float so2;
-    float co;
-    float o3;
-};
-
-struct HourlyForecast {
-    Weather *weather;
-    uint8_t length;
-    uint8_t interval;
-};
-
 struct DailyForecast {
     DailyWeather *weather;
     uint8_t length;
+};
+
+struct AQI {
+    uint16_t aqi;
+    String aqiDisplay;
+    String level;
+    String category;
+    uint32_t color;
+    String primary;
 };
 
 struct Hitokoto {
@@ -229,9 +237,36 @@ public:
         });
     }
 
+    // 和风天气 - 城市搜索: https://dev.qweather.com/docs/api/geoapi/city-lookup/
+    bool getCityInfo(CityInfo &result, const char* location) {
+        return getRestfulAPI("https://" QWEATHER_HOST "/geo/v2/city/lookup?key=" QWEATHER_KEY "&number=1&location=" + String(location), [&result](JsonDocument& json) {
+            if (strcmp(json["code"], "200") != 0) {
+                Serial.print(F("Get city info failed, error: "));
+                Serial.println(json["code"].as<const char*>());
+                return false;
+            }
+            JsonArray locations = json["location"];
+            if (locations.size() == 0) {
+                Serial.println(F("Get city failed, error: No city found"));
+                return false;
+            }
+            JsonObject city = locations[0];
+            result.name = city["name"].as<const char*>();
+            result.id = city["id"].as<const char*>();
+            result.lat = atof(city["lat"]);
+            result.lon = atof(city["lon"]);
+            result.adm2 = city["adm2"].as<const char*>();
+            result.adm1 = city["adm1"].as<const char*>();
+            result.country = city["country"].as<const char*>();
+            result.tz = city["tz"].as<const char*>();
+            result.utcOffset = city["utcOffset"].as<const char*>();
+            return true;
+        });
+    }
+
     // 和风天气 - 实时天气: https://dev.qweather.com/docs/api/weather/weather-now/
-    bool getWeatherNow(Weather &result, uint32_t locid) {
-        return getRestfulAPI("https://" QWEATHER_HOST "/v7/weather/now?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+    bool getWeatherNow(Weather &result, const char* location) {
+        return getRestfulAPI("https://" QWEATHER_HOST "/v7/weather/now?key=" QWEATHER_KEY "&location=" + String(location), [&result](JsonDocument& json) {
             if (strcmp(json["code"], "200") != 0) {
                 Serial.print(F("Get weather failed, error: "));
                 Serial.println(json["code"].as<const char*>());
@@ -255,8 +290,8 @@ public:
     }
 
     // 和风天气 - 逐小时天气预报: https://dev.qweather.com/docs/api/weather/weather-hourly-forecast/
-    bool getForecastHourly(HourlyForecast &result, uint32_t locid) {
-        return getRestfulAPI("https://" QWEATHER_HOST "/v7/weather/24h?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+    bool getForecastHourly(HourlyForecast &result, const char* location) {
+        return getRestfulAPI("https://" QWEATHER_HOST "/v7/weather/24h?key=" QWEATHER_KEY "&location=" + String(location), [&result](JsonDocument& json) {
             if (strcmp(json["code"], "200") != 0) {
                 Serial.print(F("Get hourly forecast failed, error: "));
                 Serial.println(json["code"].as<const char*>());
@@ -285,7 +320,7 @@ public:
     }
 
     // 和风天气 - 每日天气预报: https://dev.qweather.com/docs/api/weather/weather-daily-forecast/
-    bool getForecastDaily(DailyForecast &result, uint32_t locid) {
+    bool getForecastDaily(DailyForecast &result, const char* location) {
         uint8_t day = 3;
         if (result.length > 15) {
             day = 30;
@@ -296,7 +331,7 @@ public:
         } else if (result.length > 3) {
             day = 7;
         }
-        return getRestfulAPI("https://" QWEATHER_HOST "/v7/weather/" + String(day) + "d?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
+        return getRestfulAPI("https://" QWEATHER_HOST "/v7/weather/" + String(day) + "d?key=" QWEATHER_KEY "&location=" + String(location), [&result](JsonDocument& json) {
             if (strcmp(json["code"], "200") != 0) {
                 Serial.print(F("Get daily forecast failed, error: "));
                 Serial.println(json["code"].as<const char*>());
@@ -336,25 +371,35 @@ public:
         });
     }
 
-    // 和风天气 - 实时空气质量: https://dev.qweather.com/docs/api/air/air-now/
-    bool getAQI(AQI &result, uint32_t locid) {
-        return getRestfulAPI("https://" QWEATHER_HOST "/v7/air/now?key=" QWEATHER_KEY "&location=" + String(locid), [&result](JsonDocument& json) {
-            if (strcmp(json["code"], "200") != 0) {
-                Serial.print(F("Get AQI failed, error: "));
-                Serial.println(json["code"].as<const char*>());
+    // 和风天气 - 实时空气质量: https://dev.qweather.com/docs/api/air-quality/air-current/
+    bool getAQI(AQI &result, const char* coordinate) {
+        auto convertCoord = [](String coordinate) {
+            int index = coordinate.indexOf(",");
+            String longitude = coordinate.substring(0, index);
+            String latitude = coordinate.substring(index + 1);
+            return latitude + "/" + longitude;
+        };
+        return getRestfulAPI("https://" QWEATHER_HOST "/airquality/v1/current/" + convertCoord(coordinate) + "?key=" QWEATHER_KEY, [&result](JsonDocument& json) {
+            JsonArray indexes = json["indexes"];
+            if (indexes.size() == 0) {
+                Serial.println(F("Get AQI failed, error: No index found"));
                 return false;
             }
-            JsonObject now = json["now"];
-            result.aqi = atoi(now["aqi"]);
-            result.level = atoi(now["level"]);
-            result.category = now["category"].as<const char*>();
-            result.primary = now["primary"].as<const char*>();
-            result.pm10 = atof(now["pm10"]);
-            result.pm2p5 = atof(now["pm2p5"]);
-            result.no2 = atof(now["no2"]);
-            result.so2 = atof(now["so2"]);
-            result.co = atof(now["co"]);
-            result.o3 = atof(now["o3"]);
+            JsonObject index = indexes[0];
+            result.aqi = index["aqi"];
+            result.aqiDisplay = index["aqiDisplay"].as<const char*>();
+            if (index.containsKey("level"))
+                result.level = index["level"].as<const char*>();
+            if (index.containsKey("category"))
+                result.category = index["category"].as<const char*>();
+            JsonObject color = index["color"];
+            if (!color.isNull()) {
+                result.color = (color["red"].as<uint32_t>() << 16) | (color["green"].as<uint32_t>() << 8) | color["blue"].as<uint32_t>();
+            }
+            JsonObject primary = index["primaryPollutant"];
+            if (!primary.isNull()) {
+                result.primary = primary["name"].as<const char*>();
+            }
             return true;
         });
     }

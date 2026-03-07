@@ -80,7 +80,7 @@ static void drawWeatherNow(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, uint16_t
     u8g2.setCursor(epd.width() / 4 + 24, y + 32);
     u8g2.printf("气压: %d  能见度: %d KM", weather.pressure, weather.visibility);
     u8g2.setCursor(epd.width() / 4 + 24, y + 48);
-    u8g2.printf("紫外线: %d  %s %d", today.uvIndex, aqi.category.c_str(), aqi.aqi);
+    u8g2.printf("紫外线: %d  %s %s", today.uvIndex, aqi.category.c_str(), aqi.aqiDisplay.c_str());
     // Draw separator
     epd.drawFastVLine(epd.width() * 3 / 4 - 8, y, 54, COLOR_PRIMARY);
     // Draw sun and moon info
@@ -207,10 +207,10 @@ void UIImpl<UISize::LG>::weather(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm
         .weather = dailyWeather,
         .length = ARRAY_LENGTH(dailyWeather)
     };
-    bool success = api.getWeatherNow(currentWeather, config.location_id)
-                    & api.getForecastHourly(hourlyForecast, config.location_id)
-                    & api.getForecastDaily(dailyForecast, config.location_id)
-                    & api.getAQI(aqi, config.location_id);
+    bool success = api.getWeatherNow(currentWeather, rtcdata.coordinate)
+                    & api.getForecastHourly(hourlyForecast, rtcdata.coordinate)
+                    & api.getForecastDaily(dailyForecast, rtcdata.coordinate)
+                    & api.getAQI(aqi, rtcdata.coordinate);
 
     startDraw(epd);
     drawTitleBar(epd, u8g2, title.c_str(), sleeping, rssi, battery);
@@ -288,7 +288,7 @@ void UIImpl<UISize::LG>::about(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, cons
     u8g2.setFont(u8g2_font_wqy14_t);
     u8g2.setCursor(0, 64);
     u8g2.printf("    墨水屏智能助理 %s\n", version);
-    u8g2.println("    Copyright (C) 2022-2025 WC");
+    u8g2.println("    Copyright (C) 2022-2026 WC");
     u8g2.println("    气象数据由 和风天气 提供");
     u8g2.println("");
     u8g2.println("    IP: " + ip);

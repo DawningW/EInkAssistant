@@ -10,11 +10,11 @@
 
 struct Config {
     uint8_t version;          // 配置版本, 若与程序版本号不同则重置配置
-    char hostname[25];        // 主机名
+    char hostname[24];        // 主机名
     uint32_t update_interval; // 首页更新间隔(秒)
     int8_t theme;             // 图标样式, -1: 跟随时间, 0: 白色描边(白天), 1: 黑色填充(夜间)
     uint8_t hour_step;        // 逐小时天气预报的显示步长(时)
-    uint32_t location_id;     // 位置id
+    char location[16];        // 位置id或经纬度（保留两位小数）
     uint32_t bilibili_uid;    // B站uid
     char bilibili_cookie[36]; // B站cookie(SESSDATA)
 };
@@ -24,7 +24,7 @@ struct RTCData {
     time_t wakeup_time;   // 从睡眠中唤醒时的时间(秒)
     int8_t page;          // 当前正在显示的页面
     time_t next_update;   // 下次更新时间(秒)
-    uint32_t location_id; // 当日天气预报的缓存
+    char coordinate[16];  // 当日天气预报的缓存
     char date[11];
     char sunrise[6];
     char sunset[6];

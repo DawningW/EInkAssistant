@@ -9,9 +9,9 @@
 #define MODEL ""
 #endif
 // 版本号
-#define VERSION "V0.0.1"
+#define VERSION "V0.0.2"
 // 版本代码, 用于检查更新
-#define VERSION_CODE 1
+#define VERSION_CODE 2
 
 /****************************** 硬件配置 ******************************/
 // 可选值参考 https://github.com/ZinggJM/GxEPD2/blob/master/examples/GxEPD2_Example/GxEPD2_display_selection_new_style.h

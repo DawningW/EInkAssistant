@@ -137,18 +137,16 @@ void UIImpl<UISize::SM>::weather(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, tm
         .weather = &dailyWeather,
         .length = 1
     };
-    bool success = api.getWeatherNow(currentWeather, config.location_id)
-                    & api.getForecastHourly(hourlyForecast, config.location_id);
-    if (rtcdata.location_id != config.location_id ||
-            dailyWeather.date.substring(8, 10).toInt() != ptime->tm_mday) {
-        success &= api.getForecastDaily(dailyForecast, config.location_id);
+    bool success = api.getWeatherNow(currentWeather, rtcdata.coordinate)
+                    & api.getForecastHourly(hourlyForecast, rtcdata.coordinate);
+    if (dailyWeather.date.substring(8, 10).toInt() != ptime->tm_mday) {
+        success &= api.getForecastDaily(dailyForecast, rtcdata.coordinate);
         strcpy(rtcdata.date, dailyWeather.date.c_str());
         strcpy(rtcdata.sunrise, dailyWeather.sunrise.c_str());
         strcpy(rtcdata.sunset, dailyWeather.sunset.c_str());
         strcpy(rtcdata.moonPhase, dailyWeather.moonPhase.c_str());
         rtcdata.moonPhaseIcon = dailyWeather.moonPhaseIcon;
     }
-    rtcdata.location_id = config.location_id;
 
     startDraw(epd);
     drawTitleBar(epd, u8g2, title.c_str(), sleeping, rssi, battery);
@@ -212,7 +210,7 @@ void UIImpl<UISize::SM>::about(EPD_CLASS &epd, U8G2_FOR_ADAFRUIT_GFX &u8g2, cons
     u8g2.setFont(u8g2_font_wqy12_t);
     u8g2.setCursor(0, 24);
     u8g2.printf("  墨水屏智能助理 %s\n", version);
-    u8g2.println("  Copyright (C) 2022-2025 WC");
+    u8g2.println("  Copyright (C) 2022-2026 WC");
     u8g2.println("  气象数据由 和风天气 提供");
     u8g2.println("");
     u8g2.println("  IP: " + ip);

@@ -95,7 +95,8 @@ bool resetConfig(bool wifi = false) {
     config.update_interval = 3600;
     config.theme = -1;
     config.hour_step = 1;
-    config.location_id = 101010100;
+    strcpy(config.location, "101010100");
+    memset(rtcdata.coordinate, 0, sizeof(rtcdata.coordinate));
     config.bilibili_uid = 1;
     strcpy(config.bilibili_cookie, "");
     EEPROM.put(0, config);
@@ -209,6 +210,16 @@ void initPages() {
         }
 #endif
 
+        if (rtcdata.coordinate[0] == '\0') {
+            if (String(config.location).indexOf(',') == -1) {
+                CityInfo cityInfo = {};
+                if (api.getCityInfo(cityInfo, config.location)) {
+                    sprintf(rtcdata.coordinate, "%.2f,%.2f", cityInfo.lon, cityInfo.lat);
+                }
+            } else {
+                memcpy(rtcdata.coordinate, config.location, sizeof(rtcdata.coordinate));
+            }
+        }
         UI::weather(epd, u8g2Fonts, ptime, isSleeping, WiFi.RSSI(), getBatteryLevel());
 
         sleepTimer = millis();
@@ -400,7 +411,8 @@ void setup() {
             doc["update_itv"] = config.update_interval;
             doc["theme"] = config.theme;
             doc["hour_step"] = config.hour_step;
-            doc["locid"] = config.location_id;
+            doc["loc"] = config.location;
+            doc["coord"] = rtcdata.coordinate;
             doc["uid"] = config.bilibili_uid;
             String str;
             serializeJson(doc, str);
@@ -419,9 +431,11 @@ void setup() {
             value = server.arg("hour_step");
             if (value.length() > 0)
                 config.hour_step = max((int) value.toInt(), 1);
-            value = server.arg("locid");
-            if (value.length() > 0)
-                config.location_id = value.toInt();
+            value = server.arg("location");
+            if (value.length() > 0) {
+                strncpy(config.location, value.c_str(), 16);
+                memset(rtcdata.coordinate, 0, sizeof(rtcdata.coordinate));
+            }
             value = server.arg("uid");
             if (value.length() > 0)
                 config.bilibili_uid = value.toInt();

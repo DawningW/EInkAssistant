@@ -7,8 +7,8 @@
 #define EPD_BUSY 4
 #define EPD_ROTATION 3
 #define SUPPORT_PARTIAL_UPDATE false
-#define KEY_PIN_MODE INPUT_PULLUP
 #define KEY_SWITCH 5
+#define KEY_PIN_MODE INPUT_PULLUP
 #define KEY_TRIGGER_LEVEL LOW
 #define SUPPORT_DEEP_SLEEP false
 #endif
@@ -24,8 +24,25 @@
 #define EPD_MOSI 10
 #define EPD_ROTATION 3
 #define SUPPORT_PARTIAL_UPDATE false
-#define KEY_PIN_MODE INPUT_PULLUP
 #define KEY_SWITCH 0
+#define KEY_PIN_MODE INPUT_PULLUP
 #define KEY_TRIGGER_LEVEL LOW
 #define SUPPORT_DEEP_SLEEP true
+#endif
+
+// 基于 SDL 的模拟器
+#ifdef NATIVE
+#define HAS_CONFIG
+#define EPD_CS 0
+#define EPD_DC 0
+#define EPD_RST 0
+#define EPD_BUSY 0
+#define EPD_CLK 0
+#define EPD_MOSI 0
+#define EPD_ROTATION 0
+#define SUPPORT_PARTIAL_UPDATE false
+#define KEY_SWITCH 0
+#define KEY_PIN_MODE INPUT
+#define KEY_TRIGGER_LEVEL HIGH
+#define SUPPORT_DEEP_SLEEP false
 #endif

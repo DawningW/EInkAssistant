@@ -145,6 +145,8 @@ HTTP 接口文档: [点击查看](https://www.apifox.cn/apidoc/shared-2f2e3765-a
 
 为了适配不同尺寸的屏幕, 当前的页面绘制回调中会使用模板元编程来选择屏幕尺寸对应的布局绘制函数, 对应 src/ui_\<尺寸\>.cpp. 如需完全自定义布局, 可将 src/config.h 中的 UI_RESOLUTION 宏定义为 UISize::CUSTOM, 然后实现 src/ui_custom.cpp 中的各个布局绘制函数存根
 
+若使用 PlatformIO 开发, 本项目提供了跨平台本地模拟器用于快速预览布局效果, 提高开发效率. 在 PlatformIO 中选择 `emulator` 目标, 点击 `Upload` 即可一键编译并运行模拟器, 屏幕旋转、缩放、刷新率等配置可在 src/emulator.cpp 中修改
+
 ## 工具
 
 所有用到的工具都存放在 tools 目录下, 其中:

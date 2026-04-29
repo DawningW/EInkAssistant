@@ -8,6 +8,7 @@
 #ifndef __API_HPP__
 #define __API_HPP__
 
+#include <functional>
 #include <Arduino.h>
 #if defined(ESP8266)
 #include <WiFiClientSecureBearSSL.h>
@@ -15,6 +16,8 @@
 using BearSSL::WiFiClientSecure;
 #elif defined(ESP32)
 #include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+#elif defined(NATIVE)
 #include <HTTPClient.h>
 #endif
 #include <ArduinoUZlib.h>
@@ -27,6 +30,17 @@ using BearSSL::WiFiClientSecure;
 #endif
 #ifndef QWEATHER_KEY
 #define QWEATHER_KEY ""
+#endif
+
+#if defined(NATIVE)
+#define JSON_HEAP_BUFFER_SIZE           65536
+#define JSON_HEAP_BUFFER_SIZE_WITH_GZIP 65536
+#elif defined(ESP8266)
+#define JSON_HEAP_BUFFER_SIZE           8192
+#define JSON_HEAP_BUFFER_SIZE_WITH_GZIP 6144  // ESP8266 内存不足, 只能分配这么多
+#else
+#define JSON_HEAP_BUFFER_SIZE           8192
+#define JSON_HEAP_BUFFER_SIZE_WITH_GZIP 8192
 #endif
 
 struct CityInfo {
@@ -152,7 +166,7 @@ private:
                         ArduinoUZlib::decompress(response, http.getSize(), buffer, size);
                         free(response);
 
-                        DynamicJsonDocument doc(6144); // ESP8266 内存不足, 只能分配这么多
+                        DynamicJsonDocument doc(JSON_HEAP_BUFFER_SIZE_WITH_GZIP);
                         error = deserializeJson(doc, buffer, size);
                         if (!error) {
                             bool ret = cb(doc);
@@ -163,7 +177,7 @@ private:
 
                         free(buffer);
                     } else {
-                        DynamicJsonDocument doc(8192);
+                        DynamicJsonDocument doc(JSON_HEAP_BUFFER_SIZE);
                         error = deserializeJson(doc, client);
                         if (!error) {
                             bool ret = cb(doc);

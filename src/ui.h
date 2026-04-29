@@ -1,6 +1,9 @@
 #ifndef __UI_H__
 #define __UI_H__
 
+#ifdef NATIVE
+#include <time.h>
+#endif
 #include "font.h"
 #include "draw.h"
 

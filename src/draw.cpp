@@ -9,8 +9,10 @@ void startDraw(EPD_CLASS &epd, int32_t bgcolor) {
 }
 
 void endDraw(EPD_CLASS &epd, bool partial_update) {
+#ifndef NATIVE
     epd.display(partial_update);
     epd.hibernate();
+#endif
 }
 
 // 照Minecraft抄的(逃

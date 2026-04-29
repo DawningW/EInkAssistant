@@ -21,6 +21,7 @@
 #include <esp_sntp.h>
 #endif
 #include <Arduino.h>
+#ifndef NATIVE
 #include <Ticker.h>
 #if defined(ESP8266)
 #include <Updater.h>
@@ -39,6 +40,13 @@ typedef ESP8266WebServer WebServer;
 #include <detail/mimetable.h>
 #endif
 #include <WiFiUdp.h>
+#else
+#include <unistd.h>
+#include <EEPROM.h>
+#include <WiFi.h>
+#define RTC_DATA_ATTR
+#define IRAM_ATTR
+#endif
 #include <ArduinoJson.h>
 #include "draw.h"
 #include "ui.h"
@@ -54,10 +62,14 @@ const char *model_name = MODEL;
 const char *version = VERSION;
 const uint32_t version_code = VERSION_CODE;
 
+#ifndef NATIVE
 Ticker keyDebounce;
+#endif
 EPD_CLASS epd(EPD_DRIVER(EPD_CS, EPD_DC, EPD_RST, EPD_BUSY));
 U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
+#ifndef NATIVE
 WebServer server(80);
+#endif
 API<> api;
 std::vector<DrawPageFunc> pages;
 bool keyPressed;
@@ -133,6 +145,8 @@ void gotoSleep() {
     gotoSleep(min(sleep_time, max_time));
 #elif defined(ESP32)
     gotoSleep(sleep_time);
+#elif defined(NATIVE)
+    sleep(sleep_time);
 #endif
 }
 
@@ -149,14 +163,18 @@ uint8_t addPage(DrawPageFunc callback) {
 }
 
 void refreshPage() {
+#ifndef NATIVE
     if (Update.isRunning()) return;
+#endif
     Serial.print(F("Refresh page "));
     Serial.println(rtcdata.page);
     pages[rtcdata.page](false);
 }
 
 void showPage(int8_t page) {
+#ifndef NATIVE
     if (Update.isRunning()) return;
+#endif
     if (page == rtcdata.page) {
         refreshPage();
         return;
@@ -180,11 +198,13 @@ void nextPage() {
 }
 
 IRAM_ATTR void onKeyPressed() {
+#ifndef NATIVE
     keyDebounce.once_ms(20, []() {
         if (digitalRead(KEY_SWITCH) == KEY_TRIGGER_LEVEL) {
             keyPressed = true;
         }
     });
+#endif
 }
 
 void initPages() {
@@ -276,6 +296,9 @@ void setup() {
 #elif defined(ESP32)
 #define RST_REASON_DEEP_SLEEP ESP_RST_DEEPSLEEP
     uint32_t resetReason = esp_reset_reason();
+#elif defined(NATIVE)
+#define RST_REASON_DEEP_SLEEP 1
+    uint32_t resetReason = 0;
 #endif
     // 这里不判断 SLEEP_TIMEOUT 是因为我要的效果是只要从休眠中唤醒就不显示加载界面
     if (resetReason != RST_REASON_DEEP_SLEEP) {
@@ -287,6 +310,7 @@ void setup() {
         UI::loading(epd, u8g2Fonts);
 #endif
     } else {
+#ifndef NATIVE
 #ifdef ESP8266
         ESP.rtcUserMemoryRead(0, (uint32_t*) &rtcdata, sizeof(RTCData));
 #endif
@@ -294,6 +318,7 @@ void setup() {
         timeval tv;
         tv.tv_sec = rtcdata.wakeup_time;
         settimeofday(&tv, nullptr);
+#endif
         if (rtcdata.page == 0 && rtcdata.next_update - rtcdata.wakeup_time > 60) {
             gotoSleep();
         }
@@ -307,6 +332,7 @@ void setup() {
     if (resetReason != RST_REASON_DEEP_SLEEP)
         delay(3000); // 如果去掉延时, 建议不要显示加载界面
 
+#ifndef NATIVE
 #if defined(ESP8266)
     volatile bool has_set_time = false;
     settimeofday_cb([&has_set_time](bool sntp) { has_set_time = true; });
@@ -360,8 +386,10 @@ void setup() {
         }
     }
     WiFi.setHostname(config.hostname);
+#endif
 
     initPages();
+#ifndef NATIVE
     if (!SLEEP_TIMEOUT || resetReason != RST_REASON_DEEP_SLEEP) {
         server.on("/", HTTP_GET, []() {
             server.send(200, MIME_TYPE(html), F("Hello World!"));
@@ -542,6 +570,7 @@ void setup() {
         }
         gotoSleep();
     }
+#endif
     refreshPage();
 
     pinMode(KEY_SWITCH, KEY_PIN_MODE);
@@ -551,11 +580,13 @@ void setup() {
 void loop() {
     checkBattery();
 
+#ifndef NATIVE
 #ifdef ESP8266
     MDNS.update();
 #endif
     server.handleClient();
     if (Update.isRunning()) return;
+#endif
 
     if (keyPressed) {
         while (digitalRead(KEY_SWITCH) == KEY_TRIGGER_LEVEL)

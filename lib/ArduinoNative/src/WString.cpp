@@ -105,6 +105,22 @@ String::String(unsigned long value, unsigned char base)
 	*this = buf;
 }
 
+String::String(long long value, unsigned char base)
+{
+	init();
+	char buf[2 + 8 * sizeof(long long)];
+	lltoa(value, buf, base);
+	*this = buf;
+}
+
+String::String(unsigned long long value, unsigned char base)
+{
+	init();
+	char buf[1 + 8 * sizeof(unsigned long long)];
+	ulltoa(value, buf, base);
+	*this = buf;
+}
+
 String::String(float value, unsigned char decimalPlaces)
 {
 	init();

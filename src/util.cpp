@@ -21,9 +21,21 @@ uint32_t calculateCRC32(const uint8_t *data, size_t length) {
 }
 
 String datetimeToString(const char *fmt, tm *ptime) {
-    char fmt2[32], str[36];
+    char fmt2[32];
     snprintf(fmt2, sizeof(fmt2), fmt, WEEKDAYS[ptime->tm_wday]);
+#if defined(NATIVE) && defined(_WIN32)
+    String str = fmt2;
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%04d", ptime->tm_year + 1900); str.replace("%Y", buf);
+    snprintf(buf, sizeof(buf), "%02d", ptime->tm_mon + 1); str.replace("%m", buf);
+    snprintf(buf, sizeof(buf), "%02d", ptime->tm_mday); str.replace("%d", buf);
+    snprintf(buf, sizeof(buf), "%02d", ptime->tm_hour); str.replace("%H", buf);
+    snprintf(buf, sizeof(buf), "%02d", ptime->tm_min); str.replace("%M", buf);
+    snprintf(buf, sizeof(buf), "%02d", ptime->tm_sec); str.replace("%S", buf);
+#else
+    char str[36];
     strftime(str, sizeof(str), fmt2, ptime);
+#endif
     return str;
 }
 

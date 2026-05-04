@@ -71,6 +71,8 @@ public:
 	explicit String(unsigned int, unsigned char base = 10);
 	explicit String(long, unsigned char base = 10);
 	explicit String(unsigned long, unsigned char base = 10);
+	explicit String(long long, unsigned char base = 10);
+	explicit String(unsigned long long, unsigned char base = 10);
 	explicit String(float, unsigned char decimalPlaces = 2);
 	explicit String(double, unsigned char decimalPlaces = 2);
 	~String(void);

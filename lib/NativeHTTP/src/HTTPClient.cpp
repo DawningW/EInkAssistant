@@ -1,4 +1,6 @@
 #include "HTTPClient.h"
+#undef boolean
+#undef INPUT
 #include <curl/curl.h>
 
 HTTPClient::HTTPClient() {

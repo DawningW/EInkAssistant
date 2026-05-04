@@ -137,7 +137,8 @@ using std::round;
 
 #define bit(b) (1UL << (b))
 
-  typedef bool boolean;
+  // typedef bool boolean;
+  #define boolean bool
   typedef uint8_t byte;
 
   void init(void);

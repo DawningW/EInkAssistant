@@ -21,6 +21,10 @@
 
 #include "WString.h"
 
+#ifndef __MINGW32__
+#include <charconv>
+#endif
+
 /*********************************************/
 /*  Constructors                             */
 /*********************************************/
@@ -109,7 +113,12 @@ String::String(long long value, unsigned char base)
 {
 	init();
 	char buf[2 + 8 * sizeof(long long)];
+#if defined(__MINGW32__)
 	lltoa(value, buf, base);
+#else
+	auto res = std::to_chars(buf, buf + sizeof(buf), value, base);
+	*res.ptr = '\0';
+#endif
 	*this = buf;
 }
 
@@ -117,7 +126,12 @@ String::String(unsigned long long value, unsigned char base)
 {
 	init();
 	char buf[1 + 8 * sizeof(unsigned long long)];
+#if defined(__MINGW32__)
 	ulltoa(value, buf, base);
+#else
+	auto res = std::to_chars(buf, buf + sizeof(buf), value, base);
+	*res.ptr = '\0';
+#endif
 	*this = buf;
 }
 

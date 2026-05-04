@@ -32,11 +32,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-build-
 
-      - name: Install Dependencies
+      - name: Install Toolchain
         run: |
           python -m pip install --upgrade pip
           pip install platformio conan
+
+      - name: Install Emulator Dependencies
+        if: matrix.environment == 'emulator'
+        run: |
           conan profile detect --force
+          conan install . --output-folder=build --build=missing -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
 
       - name: Build with PlatformIO
         run: platformio run -e ${{ matrix.environment }}
